@@ -2,9 +2,11 @@ FROM richarvey/nginx-php-fpm:3.1.6
 
 COPY . .
 
-RUN chmod +x /var/www/html/scripts/*.sh || true
+RUN chmod +x /var/www/html/scripts/*.sh || true \
+    && mkdir -p /var/www/html/storage/framework/{cache,sessions,views} /var/www/html/storage/logs /var/www/html/bootstrap/cache \
+    && chmod -R ug+rwx /var/www/html/storage /var/www/html/bootstrap/cache || true
 
-# Image config
+# Image config — document root MUST be Laravel's public/
 ENV SKIP_COMPOSER=1
 ENV WEBROOT=/var/www/html/public
 ENV PHP_ERRORS_STDERR=1

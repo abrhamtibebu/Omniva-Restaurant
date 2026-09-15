@@ -67,8 +67,8 @@ In the Web Service → **Environment**, add:
 | `APP_DEBUG` | `false` |
 | `APP_KEY` | *(paste from `php artisan key:generate --show`)* |
 | `APP_URL` | `https://YOUR-SERVICE.onrender.com` *(set after first deploy if needed)* |
-| `FRONTEND_URL` | `https://your-frontend-host` *(or `http://localhost:3000` while testing)* |
-| `CORS_ALLOWED_ORIGINS` | Same as frontend, or comma-separated list |
+| `FRONTEND_URL` | `https://omniva.evella.et` |
+| `CORS_ALLOWED_ORIGINS` | `https://omniva.evella.et` |
 | `LOG_CHANNEL` | `stderr` |
 | `DB_CONNECTION` | `pgsql` |
 | `DB_URL` | *(Internal Database URL from step 1)* |
@@ -143,7 +143,8 @@ With auto-deploy on:
 | Build fails / Composer errors | Confirm the image copies `backend/` (root Dockerfile) or Root Directory is `backend`. |
 | 502 / app never healthy | Check logs for missing `APP_KEY` or bad `DB_URL`. Health path must be `/up`. |
 | DB connection refused | Use **Internal** URL; web service and DB must share region. |
-| CORS errors in browser | Set `FRONTEND_URL` / `CORS_ALLOWED_ORIGINS` to the exact Nuxt origin (scheme + host, no trailing slash). |
+| CORS errors in browser | Set `FRONTEND_URL` / `CORS_ALLOWED_ORIGINS` to `https://omniva.evella.et`, then **Manual Deploy** (config is cached). Also check `/up` — if it 404s, nginx is not routing to Laravel. |
+| `/up` or `/api/v1/*` returns 404 | Root Directory must be `backend`, Runtime **Docker**, and `conf/nginx/nginx-site.conf` must be in the image. Redeploy after pulling these fixes. |
 | Empty login / no users | Set `RUN_SEEDERS=true`, redeploy once, then set `false`. |
 | Free tier spin-down | First request after idle can take ~30–60s; that is normal on Free. |
 
