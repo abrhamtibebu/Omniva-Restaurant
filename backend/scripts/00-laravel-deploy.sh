@@ -31,11 +31,20 @@ php -m | grep -i pgsql || echo "WARNING: pgsql extension not loaded"
 
 echo "==> Database driver check"
 echo "DB_CONNECTION=${DB_CONNECTION:-<unset>}"
-if [ -n "${DB_URL:-}${DATABASE_URL:-}" ]; then
-  echo "DB_URL is set"
-fi
+echo "DB_HOST=${DB_HOST:-<unset>}"
+echo "DB_DATABASE=${DB_DATABASE:-<unset>}"
+echo "DB_USERNAME=${DB_USERNAME:-<unset>}"
+if [ -n "${DB_URL:-}" ]; then echo "DB_URL is set (length ${#DB_URL})"; fi
+if [ -n "${DATABASE_URL:-}" ]; then echo "DATABASE_URL is set (length ${#DATABASE_URL})"; fi
 if [ "${DB_CONNECTION:-}" != "pgsql" ] && [[ "${DB_URL:-${DATABASE_URL:-}}" == postgres* ]]; then
-  echo "WARNING: DB_URL is Postgres but DB_CONNECTION is '${DB_CONNECTION:-unset}'. Forcing pgsql for this boot."
+  echo "WARNING: forcing DB_CONNECTION=pgsql"
+  export DB_CONNECTION=pgsql
+fi
+
+# If discrete host is set, prefer it over a stale/malformed DB_URL
+if [ -n "${DB_HOST:-}" ] && [ -n "${DB_PASSWORD:-}" ]; then
+  echo "==> Using discrete DB_* vars (clearing DB_URL for this boot to avoid parse conflicts)"
+  unset DB_URL DATABASE_URL || true
   export DB_CONNECTION=pgsql
 fi
 
