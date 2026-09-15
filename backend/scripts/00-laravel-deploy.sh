@@ -7,18 +7,26 @@ echo "==> Ensuring storage directories exist"
 mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache
 chmod -R ug+rwx storage bootstrap/cache || true
 
+echo "==> Composer install (must create vendor/autoload.php)"
+composer install \
+  --no-dev \
+  --no-interaction \
+  --prefer-dist \
+  --optimize-autoloader \
+  --working-dir=/var/www/html
+
+if [ ! -f vendor/autoload.php ]; then
+  echo "ERROR: vendor/autoload.php still missing after composer install"
+  ls -la
+  exit 1
+fi
+
 if [ -z "${APP_KEY:-}" ]; then
   echo "ERROR: APP_KEY is not set. Generate one with: php artisan key:generate --show"
   exit 1
 fi
 
-# Vendor is baked into the image; refresh only if missing (safety net).
-if [ ! -f vendor/autoload.php ]; then
-  echo "==> vendor missing — running composer install"
-  composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --working-dir=/var/www/html
-fi
-
-echo "==> PHP extensions"
+echo "==> PHP pgsql extension check"
 php -m | grep -i pgsql || echo "WARNING: pgsql extension not loaded"
 
 echo "==> Caching configuration"
@@ -41,4 +49,4 @@ if [ "${RUN_SEEDERS:-false}" = "true" ]; then
   php artisan db:seed --force
 fi
 
-echo "==> Deploy scripts finished"
+echo "==> Deploy scripts finished — vendor OK"

@@ -1,18 +1,18 @@
 # yaml-language-server: $schema=https://render.com/schema/render.yaml.json
-# Optional Render Blueprint. You can also create services manually in the dashboard.
 #
-# Deploy from monorepo: set Web Service Root Directory to `backend`.
+# Monorepo: build from repo root with COPY backend/
 
 services:
   - type: web
-    name: betedesta-api
+    name: omniva-restaurant
     runtime: docker
     plan: free
-    rootDir: backend
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /up
     envVars:
+      - key: PORT
+        value: "80"
       - key: APP_NAME
         value: Betedesta
       - key: APP_ENV
@@ -24,17 +24,15 @@ services:
       - key: APP_KEY
         sync: false
       - key: APP_URL
-        sync: false
+        value: https://omniva-restaurant.onrender.com
       - key: FRONTEND_URL
-        sync: false
+        value: https://omniva.evella.et
       - key: CORS_ALLOWED_ORIGINS
-        sync: false
+        value: https://omniva.evella.et
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_URL
-        fromDatabase:
-          name: betedesta-db
-          property: connectionString
+        sync: false
       - key: SESSION_DRIVER
         value: database
       - key: CACHE_STORE
@@ -43,9 +41,3 @@ services:
         value: sync
       - key: RUN_SEEDERS
         value: "false"
-
-databases:
-  - name: betedesta-db
-    plan: free
-    databaseName: betedesta
-    user: betedesta

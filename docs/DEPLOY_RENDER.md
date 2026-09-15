@@ -31,6 +31,19 @@ Copy the full `base64:...` value. You will paste it into Render as `APP_KEY`.
 
 ## Option A — Manual setup (recommended first time)
 
+### Critical Render settings (monorepo)
+
+| Field | Value |
+| --- | --- |
+| **Root Directory** | *(leave empty)* |
+| **Runtime** | Docker |
+| **Dockerfile Path** | `./Dockerfile` |
+| **Docker Context** | `.` |
+| **Health check** | `/up` |
+| **PORT** (env) | `80` |
+
+If Root Directory is set to `backend` while the context is still the repo root, `vendor/` will be missing and you will see `Failed opening required '.../vendor/autoload.php'`.
+
 ### 1. Create a PostgreSQL database
 
 1. Render Dashboard → **New** → **PostgreSQL**.
@@ -46,12 +59,12 @@ Copy the full `base64:...` value. You will paste it into Render as `APP_KEY`.
 
 | Field | Value |
 | --- | --- |
-| Name | `betedesta-api` (or any name) |
+| Name | `omniva-restaurant` (or any name) |
 | Region | Same as the database |
-| Root Directory | `backend` |
+| Root Directory | *(empty — use repo-root Dockerfile)* |
 | Runtime | **Docker** |
 | Dockerfile Path | `./Dockerfile` |
-| Docker Context | `.` (default; relative to Root Directory) |
+| Docker Context | `.` |
 | Instance type | Free / Starter |
 
 3. Health check path: `/up`
@@ -75,6 +88,7 @@ In the Web Service → **Environment**, add:
 | `SESSION_DRIVER` | `database` |
 | `CACHE_STORE` | `database` |
 | `QUEUE_CONNECTION` | `sync` |
+| `PORT` | `80` |
 | `RUN_SEEDERS` | `true` **only on the first deploy**, then change to `false` |
 
 Notes:
@@ -139,12 +153,14 @@ With auto-deploy on:
 
 | Symptom | Fix |
 | --- | --- |
-| `open Dockerfile: no such file or directory` | Render is building from the repo root. Push the root `Dockerfile`, or set Root Directory to `backend`. |
+| `open Dockerfile: no such file or directory` | Use repo-root `./Dockerfile` with empty Root Directory, or set Root Directory to `backend`. |
+| `vendor/autoload.php` missing | Wrong Docker context. Use root Dockerfile (`COPY backend/`). Confirm build log has `vendor/autoload.php OK`. |
+| No open ports detected | Set env `PORT=80`. |
 | Build fails / Composer errors | Confirm the image copies `backend/` (root Dockerfile) or Root Directory is `backend`. |
 | 502 / app never healthy | Check logs for missing `APP_KEY` or bad `DB_URL`. Health path must be `/up`. |
 | DB connection refused | Use **Internal** URL; web service and DB must share region. |
-| CORS errors in browser | Set `FRONTEND_URL` / `CORS_ALLOWED_ORIGINS` to `https://omniva.evella.et`, then **Manual Deploy** (config is cached). Also check `/up` — if it 404s, nginx is not routing to Laravel. |
-| `/up` or `/api/v1/*` returns 404 | Root Directory must be `backend`, Runtime **Docker**, and `conf/nginx/nginx-site.conf` must be in the image. Redeploy after pulling these fixes. |
+| CORS errors in browser | Set `FRONTEND_URL` / `CORS_ALLOWED_ORIGINS` to `https://omniva.evella.et`, then **Manual Deploy**. If `/up` is 500, fix vendor/DB first — CORS is a side effect. |
+| `/up` or `/api/v1/*` returns 404/500 | Redeploy with root Dockerfile + `PORT=80`. Check logs for `vendor/autoload.php`. |
 | Empty login / no users | Set `RUN_SEEDERS=true`, redeploy once, then set `false`. |
 | Free tier spin-down | First request after idle can take ~30–60s; that is normal on Free. |
 

@@ -1,11 +1,11 @@
 .git
 .gitignore
-.cursor
+.env
+.env.*
+**/node_modules
 frontend
 docs
-**/.env
-**/.env.*
-!**/.env.example
+*.md
 backend/vendor
 backend/node_modules
 backend/storage/logs/*
@@ -16,9 +16,7 @@ backend/storage/framework/testing/*
 backend/bootstrap/cache/*.php
 backend/database/*.sqlite
 backend/database/*.sqlite-journal
-backend/.phpunit.result.cache
-backend/.phpunit.cache
 backend/tests
 backend/phpunit.xml
-backend/README.md
-README.md
+backend/.phpunit.result.cache
+backend/.phpunit.cache
