@@ -45,6 +45,12 @@ php artisan test
 
 PHPUnit uses an in-memory SQLite database.
 
+## Deploy backend to Render
+
+Docker + PostgreSQL. Step-by-step: [docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md).
+
+Quick path: push the repo → Render **PostgreSQL** → **Web Service** with Root Directory `backend`, Runtime **Docker**, set `APP_KEY`, `DB_CONNECTION=pgsql`, `DB_URL` (Internal Database URL), `FRONTEND_URL`, then deploy. Health check: `/up`.
+
 ## Dev credentials
 
 All seeded accounts use password `Password123!`.

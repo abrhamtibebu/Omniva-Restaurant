@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+# Optional Render Blueprint. You can also create services manually in the dashboard.
+#
+# Deploy from monorepo: set Web Service Root Directory to `backend`.
+
+services:
+  - type: web
+    name: betedesta-api
+    runtime: docker
+    plan: free
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
+    envVars:
+      - key: APP_NAME
+        value: Betedesta
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_URL
+        fromDatabase:
+          name: betedesta-db
+          property: connectionString
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: RUN_SEEDERS
+        value: "false"
+
+databases:
+  - name: betedesta-db
+    plan: free
+    databaseName: betedesta
+    user: betedesta
