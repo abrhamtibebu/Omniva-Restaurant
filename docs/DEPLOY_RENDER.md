@@ -6,13 +6,12 @@ The backend is a Laravel 12 API. Render does not ship a native PHP buildpack for
 
 | File | Purpose |
 | --- | --- |
-| `Dockerfile` | nginx + PHP-FPM image when Render builds from the repo root |
-| `backend/Dockerfile` | Same image when Root Directory is `backend` |
-| `backend/scripts/00-laravel-deploy.sh` | Composer install, caches, migrate (optional seed) |
-| `backend/.dockerignore` | Keeps the image small |
-| `backend/config/cors.php` | Allows your Nuxt `FRONTEND_URL` |
-| `render.yaml` | Optional Blueprint (API + Postgres) |
-| `bootstrap/app.php` | Trusts Render’s reverse proxy |
+| `Dockerfile` | **PHP 8.4** + nginx + FPM (build from monorepo root) |
+| `docker/nginx.conf` / `docker/start.sh` | nginx + container entrypoint |
+| `backend/Dockerfile` | Alternate build when Root Directory is `backend` |
+| `backend/scripts/00-laravel-deploy.sh` | Composer, caches, migrate (optional seed) |
+| `backend/config/cors.php` | Allows `FRONTEND_URL` / `CORS_ALLOWED_ORIGINS` |
+| `render.yaml` | Optional Blueprint |
 
 ## Before you start
 
@@ -31,7 +30,7 @@ Copy the full `base64:...` value. You will paste it into Render as `APP_KEY`.
 
 ## Option A — Manual setup (recommended first time)
 
-### Critical Render settings (monorepo)
+### Critical Render settings (monorepo, PHP 8.4)
 
 | Field | Value |
 | --- | --- |
@@ -41,6 +40,8 @@ Copy the full `base64:...` value. You will paste it into Render as `APP_KEY`.
 | **Docker Context** | `.` |
 | **Health check** | `/up` |
 | **PORT** (env) | `80` |
+
+The image is **PHP 8.4** (required by `composer.lock` / Symfony 8). Do not use `richarvey/nginx-php-fpm:3.1.6` — that is PHP 8.2 and Composer will fail.
 
 If Root Directory is set to `backend` while the context is still the repo root, `vendor/` will be missing and you will see `Failed opening required '.../vendor/autoload.php'`.
 
@@ -154,7 +155,7 @@ With auto-deploy on:
 | Symptom | Fix |
 | --- | --- |
 | `open Dockerfile: no such file or directory` | Use repo-root `./Dockerfile` with empty Root Directory, or set Root Directory to `backend`. |
-| `vendor/autoload.php` missing | Wrong Docker context. Use root Dockerfile (`COPY backend/`). Confirm build log has `vendor/autoload.php OK`. |
+| Composer: PHP >= 8.4.1 required | You are on an old PHP 8.2 image. Use the repo-root Dockerfile (`php:8.4-fpm-alpine`). |
 | No open ports detected | Set env `PORT=80`. |
 | Build fails / Composer errors | Confirm the image copies `backend/` (root Dockerfile) or Root Directory is `backend`. |
 | 502 / app never healthy | Check logs for missing `APP_KEY` or bad `DB_URL`. Health path must be `/up`. |
