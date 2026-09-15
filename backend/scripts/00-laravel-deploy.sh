@@ -29,6 +29,16 @@ fi
 echo "==> PHP pgsql extension check"
 php -m | grep -i pgsql || echo "WARNING: pgsql extension not loaded"
 
+echo "==> Database driver check"
+echo "DB_CONNECTION=${DB_CONNECTION:-<unset>}"
+if [ -n "${DB_URL:-}${DATABASE_URL:-}" ]; then
+  echo "DB_URL is set"
+fi
+if [ "${DB_CONNECTION:-}" != "pgsql" ] && [[ "${DB_URL:-${DATABASE_URL:-}}" == postgres* ]]; then
+  echo "WARNING: DB_URL is Postgres but DB_CONNECTION is '${DB_CONNECTION:-unset}'. Forcing pgsql for this boot."
+  export DB_CONNECTION=pgsql
+fi
+
 echo "==> Caching configuration"
 php artisan config:cache
 
