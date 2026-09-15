@@ -6,7 +6,8 @@ The backend is a Laravel 12 API. Render does not ship a native PHP buildpack for
 
 | File | Purpose |
 | --- | --- |
-| `backend/Dockerfile` | nginx + PHP-FPM image used by Render |
+| `Dockerfile` | nginx + PHP-FPM image when Render builds from the repo root |
+| `backend/Dockerfile` | Same image when Root Directory is `backend` |
 | `backend/scripts/00-laravel-deploy.sh` | Composer install, caches, migrate (optional seed) |
 | `backend/.dockerignore` | Keeps the image small |
 | `backend/config/cors.php` | Allows your Nuxt `FRONTEND_URL` |
@@ -138,7 +139,8 @@ With auto-deploy on:
 
 | Symptom | Fix |
 | --- | --- |
-| Build fails / Composer errors | Confirm Root Directory is `backend` and `composer.json` is there. |
+| `open Dockerfile: no such file or directory` | Render is building from the repo root. Push the root `Dockerfile`, or set Root Directory to `backend`. |
+| Build fails / Composer errors | Confirm the image copies `backend/` (root Dockerfile) or Root Directory is `backend`. |
 | 502 / app never healthy | Check logs for missing `APP_KEY` or bad `DB_URL`. Health path must be `/up`. |
 | DB connection refused | Use **Internal** URL; web service and DB must share region. |
 | CORS errors in browser | Set `FRONTEND_URL` / `CORS_ALLOWED_ORIGINS` to the exact Nuxt origin (scheme + host, no trailing slash). |
