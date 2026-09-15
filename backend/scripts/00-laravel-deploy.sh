@@ -3,9 +3,6 @@ set -euo pipefail
 
 cd /var/www/html
 
-echo "==> Installing Composer dependencies"
-composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --working-dir=/var/www/html
-
 echo "==> Ensuring storage directories exist"
 mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache
 chmod -R ug+rwx storage bootstrap/cache || true
@@ -15,6 +12,15 @@ if [ -z "${APP_KEY:-}" ]; then
   exit 1
 fi
 
+# Vendor is baked into the image; refresh only if missing (safety net).
+if [ ! -f vendor/autoload.php ]; then
+  echo "==> vendor missing — running composer install"
+  composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --working-dir=/var/www/html
+fi
+
+echo "==> PHP extensions"
+php -m | grep -i pgsql || echo "WARNING: pgsql extension not loaded"
+
 echo "==> Caching configuration"
 php artisan config:cache
 
@@ -22,7 +28,7 @@ echo "==> Caching routes"
 php artisan route:cache
 
 echo "==> Caching views"
-php artisan view:cache
+php artisan view:cache || true
 
 echo "==> Linking public storage"
 php artisan storage:link || true
