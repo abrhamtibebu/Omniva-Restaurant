@@ -95,8 +95,5 @@ async function submit() {
       </form>
     </div>
 
-    <p class="mt-6 text-center text-xs text-slate-500">
-      Betedesta Bar &amp; Restaurant
-    </p>
   </div>
 </template>

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Resources;
 
 use App\Models\User;
+use App\Services\SubscriptionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -62,6 +63,14 @@ class UserResource extends JsonResource
             'can_switch_branch' => $this->when(
                 $request->user() === null || $request->user()->is($this->resource),
                 fn () => $this->canManageBranches(),
+            ),
+            'is_platform' => $this->when(
+                $request->user() === null || $request->user()->is($this->resource),
+                fn () => (bool) $this->is_platform,
+            ),
+            'bono_control' => $this->when(
+                $request->user() === null || $request->user()->is($this->resource),
+                fn () => app(SubscriptionService::class)->summary($this->restaurantId()),
             ),
             'created_at' => $this->created_at?->toIso8601String(),
         ];

@@ -90,6 +90,9 @@ export function useRestaurantApi() {
     users: (params?: Record<string, unknown>) => api.get('/users', { query: params }),
     createUser: (body: object) => api.post('/users', body),
     updateUser: (id: number, body: object) => api.patch(`/users/${id}`, body),
+    deleteUser: (id: number) => api.destroy(`/users/${id}`),
+
+    decidePurchase: (id: number, body: object) => api.post(`/purchases/${id}/decide`, body),
     roles: () => api.get('/roles'),
     clockIn: () => api.post('/shifts/clock-in'),
     clockOut: () => api.post('/shifts/clock-out'),

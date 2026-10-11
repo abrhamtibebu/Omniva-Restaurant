@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\InventoryUnit;
 use App\Enums\RoleSlug;
+use App\Models\BonoType;
 use App\Models\Branch;
 use App\Models\InventoryItem;
 use App\Models\MenuCategory;
@@ -15,6 +16,9 @@ use App\Models\RestaurantTable;
 use App\Models\Role;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Services\BonoHandoverService;
+use App\Services\StockControlService;
+use App\Services\SubscriptionService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -51,7 +55,22 @@ class DatabaseSeeder extends Seeder
             'active' => true,
         ]);
 
+        app(SubscriptionService::class)->grantComplimentary($restaurant);
+
         $password = Hash::make('Password123!');
+        $adminRoleId = Role::query()->where('slug', RoleSlug::Admin->value)->value('id');
+
+        // Platform operator lives outside the restaurant tenant.
+        User::query()->create([
+            'name' => 'Platform Ops',
+            'email' => 'platform@omniva.test',
+            'phone' => '0911000000',
+            'password' => $password,
+            'role_id' => $adminRoleId,
+            'branch_id' => $branch->id,
+            'active' => true,
+            'is_platform' => true,
+        ]);
 
         $staff = [
             ['name' => 'Admin Owner', 'email' => 'admin@omniva.test', 'slug' => RoleSlug::Admin],
@@ -59,6 +78,8 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Chala Cashier', 'email' => 'cashier@omniva.test', 'slug' => RoleSlug::Cashier],
             ['name' => 'Hana Waiter', 'email' => 'waiter@omniva.test', 'slug' => RoleSlug::Waiter],
             ['name' => 'Kidus Kitchen', 'email' => 'kitchen@omniva.test', 'slug' => RoleSlug::Kitchen],
+            ['name' => 'Abel Barman', 'email' => 'barman@omniva.test', 'slug' => RoleSlug::Barman],
+            ['name' => 'Sara Store', 'email' => 'store@omniva.test', 'slug' => RoleSlug::Storekeeper],
         ];
 
         foreach ($staff as $row) {
@@ -70,6 +91,7 @@ class DatabaseSeeder extends Seeder
                 'role_id' => Role::query()->where('slug', $row['slug']->value)->value('id'),
                 'branch_id' => $branch->id,
                 'active' => true,
+                'is_platform' => false,
             ]);
         }
 
@@ -288,5 +310,94 @@ class DatabaseSeeder extends Seeder
             'email' => 'orders@highlandmeats.test',
             'active' => true,
         ]);
+
+        $this->seedBonoControl(
+            $branch,
+            User::query()->where('email', 'admin@omniva.test')->firstOrFail(),
+            $createdItems,
+        );
+    }
+
+    /**
+     * Betedesta is the reference restaurant that runs on Bono control.
+     *
+     * @param  array<string, MenuItem>  $createdItems
+     */
+    private function seedBonoControl(Branch $branch, User $owner, array $createdItems): void
+    {
+        app(StockControlService::class)->ensureLocations($branch->id);
+
+        $beerNames = [
+            'ቢራ / Beer',
+            'ሄይነከን / Heineken',
+            'በደሌ እና ካስትል ትልቁ / Bedele & Castle Large',
+            'ድራፍት ሲንግል / Draft Beer Single',
+            'ድራፍት ጃንቦ / Draft Beer Jumbo',
+        ];
+        $softNames = [
+            'ፕላስቲክ ለስላሳ / Soft Drink (Plastic)',
+            '1 ሊትር ውሃ / 1 Liter Water',
+            'አምቦ ውሃ / Ambo Water',
+        ];
+
+        $beerIds = collect($beerNames)
+            ->map(fn (string $name) => $createdItems[$name]->id ?? null)
+            ->filter()
+            ->values()
+            ->all();
+        $softIds = collect($softNames)
+            ->map(fn (string $name) => $createdItems[$name]->id ?? null)
+            ->filter()
+            ->values()
+            ->all();
+
+        $beer = $this->bonoType($branch->id, 'Beer', 'BEER', '50.00', $beerIds);
+        $soft = $this->bonoType($branch->id, 'Soft drink', 'SOFT', '30.00', $softIds);
+
+        app(BonoHandoverService::class)->openingBalance($owner, $branch->id, [
+            ['bono_type_id' => $beer->id, 'quantity' => '100', 'idempotency_key' => 'seed-opening-beer'],
+            ['bono_type_id' => $soft->id, 'quantity' => '80', 'idempotency_key' => 'seed-opening-soft'],
+        ]);
+    }
+
+    /**
+     * @param  list<int>  $menuItemIds
+     */
+    private function bonoType(int $branchId, string $name, string $code, string $unitValue, array $menuItemIds = []): BonoType
+    {
+        $existing = BonoType::query()
+            ->where('branch_id', $branchId)
+            ->where(fn ($query) => $query->where('code', $code)->orWhere('name', $name))
+            ->first();
+
+        if ($existing) {
+            $existing->update([
+                'name' => $name,
+                'code' => $code,
+                'unit_value' => $unitValue,
+                'redemption_department' => 'bar',
+                'active' => true,
+            ]);
+            if ($menuItemIds !== []) {
+                $existing->menuItems()->sync($menuItemIds);
+            }
+
+            return $existing->fresh();
+        }
+
+        $type = BonoType::query()->create([
+            'branch_id' => $branchId,
+            'name' => $name,
+            'code' => $code,
+            'unit_value' => $unitValue,
+            'redemption_department' => 'bar',
+            'active' => true,
+        ]);
+
+        if ($menuItemIds !== []) {
+            $type->menuItems()->sync($menuItemIds);
+        }
+
+        return $type;
     }
 }

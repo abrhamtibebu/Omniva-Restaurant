@@ -41,10 +41,25 @@ class StoreUserRequest extends FormRequest
                 $validator->errors()->add('role_id', 'Only an administrator can create administrator accounts.');
             }
 
+            $this->guardDirectory($validator, $role?->slug);
+
             $branchId = (int) $this->input('branch_id');
             if ($branchId && ! $this->user()?->canOperateBranch($branchId)) {
                 $validator->errors()->add('branch_id', 'You cannot assign staff to that branch.');
             }
         });
+    }
+
+    private function guardDirectory($validator, ?string $slug): void
+    {
+        $directory = (string) $this->input('directory');
+
+        if ($directory === 'staff' && $slug && ! in_array($slug, RoleSlug::staffDirectory(), true)) {
+            $validator->errors()->add('role_id', 'That role belongs on the Bono team list.');
+        }
+
+        if ($directory === 'bono' && $slug && ! in_array($slug, RoleSlug::bonoTeam(), true)) {
+            $validator->errors()->add('role_id', 'That role belongs on the Staff list.');
+        }
     }
 }

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BillingController;
+use App\Http\Controllers\Api\V1\BonoController;
 use App\Http\Controllers\Api\V1\BranchController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\InventoryController;
@@ -11,12 +13,17 @@ use App\Http\Controllers\Api\V1\OperationsController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\Api\V1\ProcurementController;
+use App\Http\Controllers\Api\V1\ReconciliationController;
+use App\Http\Controllers\Api\V1\RegisterController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\StockControlController;
 use App\Http\Controllers\Api\V1\TableController;
+use App\Http\Controllers\Api\V1\TransferReceiptController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:login');
 
 Route::middleware(['auth:sanctum', 'active', 'throttle:api'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -48,6 +55,7 @@ Route::middleware(['auth:sanctum', 'active', 'throttle:api'])->group(function ()
     Route::get('/menu/items', [MenuController::class, 'items']);
     Route::post('/menu/items', [MenuController::class, 'storeItem']);
     Route::patch('/menu/items/{item}', [MenuController::class, 'updateItem']);
+    Route::get('/menu/items/{item}/recipes', [MenuController::class, 'itemRecipes']);
     Route::post('/menu/items/{item}/variants', [MenuController::class, 'storeVariant']);
     Route::patch('/menu/variants/{variant}', [MenuController::class, 'updateVariant']);
     Route::get('/menu/modifiers', [MenuController::class, 'modifiers']);
@@ -110,4 +118,53 @@ Route::middleware(['auth:sanctum', 'active', 'throttle:api'])->group(function ()
     Route::get('/reports/payments', [ReportController::class, 'payments']);
     Route::get('/reports/expenses', [ReportController::class, 'expenses']);
     Route::get('/reports/inventory', [ReportController::class, 'inventory']);
+
+    Route::get('/billing', [BillingController::class, 'show']);
+    Route::post('/billing/invoices/{invoice}/pay', [BillingController::class, 'pay']);
+
+    // Bono control product surface — entitlement required.
+    Route::prefix('bono')->middleware('bono')->group(function () {
+        Route::get('/types', [BonoController::class, 'types']);
+        Route::post('/types', [BonoController::class, 'storeType']);
+        Route::patch('/types/{bonoType}', [BonoController::class, 'updateType']);
+        Route::get('/balances', [BonoController::class, 'balances']);
+        Route::get('/ledger', [BonoController::class, 'ledger']);
+        Route::post('/opening-balances', [BonoController::class, 'opening']);
+        Route::get('/people', [BonoController::class, 'people']);
+        Route::get('/transfer-receipts', [TransferReceiptController::class, 'index']);
+        Route::post('/transfer-receipts', [TransferReceiptController::class, 'store']);
+        Route::patch('/transfer-receipts/{paymentEvidence}', [TransferReceiptController::class, 'update']);
+        Route::get('/handovers', [BonoController::class, 'handovers']);
+        Route::post('/handovers', [BonoController::class, 'storeHandover']);
+        Route::post('/handovers/{bonoHandover}/approve', [BonoController::class, 'approve']);
+        Route::post('/handovers/{bonoHandover}/reject', [BonoController::class, 'reject']);
+        Route::post('/handovers/{bonoHandover}/issue', [BonoController::class, 'issue']);
+        Route::post('/handovers/{bonoHandover}/confirm', [BonoController::class, 'confirm']);
+
+        Route::get('/stock-locations', [StockControlController::class, 'locations']);
+        Route::get('/stock-requests', [StockControlController::class, 'index']);
+        Route::post('/stock-requests', [StockControlController::class, 'store']);
+        Route::post('/stock-requests/{stockRequest}/approve', [StockControlController::class, 'approve']);
+        Route::post('/stock-requests/{stockRequest}/reject', [StockControlController::class, 'reject']);
+        Route::post('/stock-requests/{stockRequest}/issue', [StockControlController::class, 'issue']);
+        Route::post('/stock-requests/{stockRequest}/confirm', [StockControlController::class, 'confirm']);
+        Route::post('/bar-redemptions', [StockControlController::class, 'redeem']);
+        Route::post('/stock-waste', [StockControlController::class, 'waste']);
+        Route::post('/stock-counts', [StockControlController::class, 'count']);
+        Route::post('/kitchen-sales-summaries', [StockControlController::class, 'kitchenSales']);
+
+        Route::get('/reconciliations', [ReconciliationController::class, 'index']);
+        Route::post('/reconciliations', [ReconciliationController::class, 'store']);
+        Route::post('/reconciliations/{reconciliation}/verify', [ReconciliationController::class, 'verify']);
+        Route::post('/reconciliations/{reconciliation}/accept', [ReconciliationController::class, 'accept']);
+        Route::post('/reconciliations/{reconciliation}/flag', [ReconciliationController::class, 'flag']);
+        Route::post('/reconciliations/{reconciliation}/return', [ReconciliationController::class, 'returnForCorrection']);
+        Route::post('/reconciliations/{reconciliation}/close', [ReconciliationController::class, 'close']);
+        Route::get('/discrepancies', [ReconciliationController::class, 'discrepancies']);
+        Route::post('/discrepancies/{discrepancy}/resolve', [ReconciliationController::class, 'resolve']);
+        Route::get('/operations/inbox', [ReconciliationController::class, 'inbox']);
+        Route::get('/operations/reports', [ReconciliationController::class, 'reports']);
+    });
+
+    Route::post('/purchases/{purchase}/decide', [ProcurementController::class, 'decidePurchase']);
 });

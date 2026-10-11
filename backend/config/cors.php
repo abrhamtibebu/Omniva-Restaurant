@@ -1,12 +1,15 @@
 <?php
 
 /**
- * CORS for the Nuxt SPA (Bearer tokens — credentials not required).
+ * CORS for the Nuxt SPAs (Bearer tokens — credentials not required).
  *
- * Set on Render:
- *   FRONTEND_URL=https://omniva.evella.et
- *   CORS_ALLOWED_ORIGINS=https://omniva.evella.et
- * (comma-separated for multiple origins)
+ * Local:
+ *   FRONTEND_URL=http://localhost:3000
+ *   FRONTEND_BONO_URL=http://localhost:3001
+ *   CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+ *
+ * Production (comma-separated for POS + Bono origins):
+ *   CORS_ALLOWED_ORIGINS=https://pos.example.com,https://bono.example.com
  *
  * Use CORS_ALLOWED_ORIGINS=* to allow any origin (fine with Bearer auth).
  *

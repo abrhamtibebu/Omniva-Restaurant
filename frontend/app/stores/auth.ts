@@ -9,6 +9,8 @@ const HOME_BY_ROLE: Record<RoleSlug, string> = {
   cashier: '/orders',
   waiter: '/tables',
   kitchen: '/kitchen',
+  barman: '/account',
+  storekeeper: '/inventory',
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -26,7 +28,11 @@ export const useAuthStore = defineStore('auth', () => {
   const availableBranches = computed(() => user.value?.available_branches ?? [])
   const canSwitchBranch = computed(() => Boolean(user.value?.can_switch_branch))
   const currency = computed(() => user.value?.branch?.currency ?? 'ETB')
-  const homeRoute = computed(() => (role.value ? HOME_BY_ROLE[role.value] : '/login'))
+  const isPlatform = computed(() => Boolean(user.value?.is_platform))
+  const homeRoute = computed(() => {
+    if (!role.value) return '/login'
+    return HOME_BY_ROLE[role.value] ?? '/account'
+  })
 
   function can(permission: string): boolean {
     return permissions.value.includes(permission)
@@ -123,6 +129,7 @@ export const useAuthStore = defineStore('auth', () => {
     availableBranches,
     canSwitchBranch,
     currency,
+    isPlatform,
     homeRoute,
     can,
     canAny,

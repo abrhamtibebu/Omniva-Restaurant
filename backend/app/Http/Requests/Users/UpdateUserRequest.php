@@ -48,6 +48,17 @@ class UpdateUserRequest extends FormRequest
                 if ($role?->slug === RoleSlug::Admin->value && ! $this->user()?->isAdmin()) {
                     $validator->errors()->add('role_id', 'Only an administrator can assign the administrator role.');
                 }
+
+                $directory = (string) $this->input('directory');
+                $slug = $role?->slug;
+
+                if ($directory === 'staff' && $slug && ! in_array($slug, RoleSlug::staffDirectory(), true)) {
+                    $validator->errors()->add('role_id', 'That role belongs on the Bono team list.');
+                }
+
+                if ($directory === 'bono' && $slug && ! in_array($slug, RoleSlug::bonoTeam(), true)) {
+                    $validator->errors()->add('role_id', 'That role belongs on the Staff list.');
+                }
             }
 
             if ($this->filled('branch_id')) {

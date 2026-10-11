@@ -69,6 +69,25 @@ export const PERMISSIONS = {
   reportsView: 'reports.view',
 
   auditLogsView: 'audit_logs.view',
+
+  bonosTypesManage: 'bonos.types.manage',
+  bonosIssue: 'bonos.issue',
+  bonosRequest: 'bonos.request',
+  bonosConfirm: 'bonos.confirm',
+  bonosSubmit: 'bonos.submit',
+  bonosReconcile: 'bonos.reconcile',
+
+  stockRequest: 'stock.request',
+  stockIssue: 'stock.issue',
+  stockConfirm: 'stock.confirm',
+
+  barRedeem: 'bar.redeem',
+  barClose: 'bar.close',
+  kitchenReconcile: 'kitchen.reconcile',
+
+  discrepanciesReview: 'discrepancies.review',
+  operationsView: 'operations.view',
+  purchasesApprove: 'purchases.approve',
 } as const
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]

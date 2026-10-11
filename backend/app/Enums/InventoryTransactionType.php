@@ -12,6 +12,7 @@ enum InventoryTransactionType: string
     case AdjustmentOut = 'adjustment_out';
     case Waste = 'waste';
     case Return = 'return';
+    case TransferOut = 'transfer_out';
 
     public function isInbound(): bool
     {

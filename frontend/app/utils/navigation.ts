@@ -40,7 +40,7 @@ const ICONS = {
  */
 export const NAV_SECTIONS: NavSection[] = [
   {
-    label: 'Operations',
+    label: 'Floor',
     items: [
       { label: 'Dashboard', to: '/dashboard', icon: ICONS.dashboard, permissions: [PERMISSIONS.dashboardView] },
       { label: 'POS', to: '/pos', icon: ICONS.pos, permissions: [PERMISSIONS.ordersCreate] },
@@ -69,7 +69,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: 'Expenses', to: '/expenses', icon: ICONS.expenses, permissions: [PERMISSIONS.expensesView] },
       { label: 'Customers', to: '/customers', icon: ICONS.customers, permissions: [PERMISSIONS.customersView] },
       { label: 'Reservations', to: '/reservations', icon: ICONS.reservations, permissions: [PERMISSIONS.reservationsView] },
-      { label: 'Staff', to: '/staff', icon: ICONS.staff, permissions: [PERMISSIONS.usersView, PERMISSIONS.shiftsView] },
+      { label: 'Staff', to: '/staff', icon: ICONS.staff, permissions: [PERMISSIONS.usersView, PERMISSIONS.shiftsView, PERMISSIONS.shiftsClock] },
     ],
   },
   {

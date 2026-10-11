@@ -23,6 +23,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'permission' => EnsurePermission::class,
             'active' => EnsureUserIsActive::class,
+            'bono' => \App\Http\Middleware\EnsureBonoEntitlement::class,
+            'client' => \App\Http\Middleware\IdentifyClient::class,
+        ]);
+
+        $middleware->appendToGroup('api', [
+            \App\Http\Middleware\IdentifyClient::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

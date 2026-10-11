@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\RoleSlug;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Users\StoreUserRequest;
 use App\Http\Requests\Users\UpdateUserRequest;
@@ -36,6 +37,12 @@ class UserController extends Controller
                 }
             })
             ->when($request->integer('role_id'), fn ($q, $id) => $q->where('role_id', $id))
+            ->when($request->string('directory')->toString() === 'staff', function ($q) {
+                $q->whereHas('role', fn ($role) => $role->whereIn('slug', RoleSlug::staffDirectory()));
+            })
+            ->when($request->string('directory')->toString() === 'bono', function ($q) {
+                $q->whereHas('role', fn ($role) => $role->whereIn('slug', RoleSlug::bonoTeam()));
+            })
             ->when($request->filled('active'), fn ($q) => $q->where('active', $request->boolean('active')))
             ->when($request->filled('search'), function ($q) use ($request) {
                 $term = '%'.$request->string('search')->toString().'%';

@@ -1,0 +1,73 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-brand-50: oklch(0.971 0.014 25.3);
+  --color-brand-100: oklch(0.936 0.032 25.3);
+  --color-brand-200: oklch(0.885 0.062 25.3);
+  --color-brand-300: oklch(0.808 0.108 25.3);
+  --color-brand-400: oklch(0.704 0.161 25.3);
+  --color-brand-500: oklch(0.637 0.196 25.3);
+  --color-brand-600: oklch(0.577 0.198 25.3);
+  --color-brand-700: oklch(0.505 0.176 25.3);
+  --color-brand-800: oklch(0.444 0.148 25.3);
+  --color-brand-900: oklch(0.396 0.124 25.3);
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-slate-100 text-slate-900 antialiased;
+  }
+}
+
+@layer components {
+  /* Shared chrome only — Tailwind v4 cannot @apply a custom class like `btn`. */
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger,
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+           transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+           disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-brand-600 text-white hover:bg-brand-700 focus-visible:ring-brand-500;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-slate-700 ring-1 ring-slate-300 ring-inset hover:bg-slate-50
+           focus-visible:ring-slate-400;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500;
+  }
+
+  .btn-ghost {
+    @apply text-slate-600 hover:bg-slate-100 focus-visible:ring-slate-400;
+  }
+
+  /* Touch-friendly sizing for POS and kitchen screens. */
+  .btn-touch {
+    @apply px-5 py-3.5 text-base;
+  }
+
+  .input {
+    @apply block w-full rounded-lg border-0 px-3 py-2.5 text-slate-900 ring-1 ring-slate-300
+           ring-inset placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500 focus:ring-inset
+           disabled:bg-slate-50 disabled:text-slate-500;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+
+  .card {
+    @apply rounded-xl bg-white shadow-sm ring-1 ring-slate-200;
+  }
+}

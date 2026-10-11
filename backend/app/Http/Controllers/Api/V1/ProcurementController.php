@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\Permission;
+use App\Enums\PurchaseApprovalStatus;
 use App\Enums\PurchasePaymentStatus;
 use App\Http\Controllers\Api\Concerns\ResolvesBranch;
 use App\Http\Controllers\Controller;
 use App\Models\Purchase;
 use App\Models\Supplier;
+use App\Services\AuditLogger;
 use App\Services\InventoryService;
 use App\Services\SequenceService;
 use App\Support\Money;
@@ -102,6 +104,7 @@ class ProcurementController extends Controller
             'supplier_id' => ['required', 'exists:suppliers,id'],
             'purchase_date' => ['required', 'date'],
             'payment_status' => ['sometimes', Rule::enum(PurchasePaymentStatus::class)],
+            'approval_status' => ['sometimes', Rule::enum(PurchaseApprovalStatus::class)],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.inventory_item_id' => ['required', 'exists:inventory_items,id'],
@@ -123,6 +126,10 @@ class ProcurementController extends Controller
                 'subtotal' => $subtotal,
                 'total' => $subtotal,
                 'payment_status' => $data['payment_status'] ?? PurchasePaymentStatus::Unpaid->value,
+                'approval_status' => $data['approval_status']
+                    ?? ($request->user()->isAdmin() || $request->user()->isManager()
+                        ? PurchaseApprovalStatus::Approved->value
+                        : PurchaseApprovalStatus::Pending->value),
                 'notes' => $data['notes'] ?? null,
                 'created_by' => $request->user()->id,
             ]);
@@ -156,7 +163,44 @@ class ProcurementController extends Controller
         abort_unless($request->user()->hasPermission(Permission::PurchasesManage), 403);
         abort_unless($purchase->branch_id === $this->branchId(), 404);
 
-        DB::transaction(fn () => $inventory->receivePurchase($purchase, $request->user()));
+        $payload = $request->validate([
+            'items' => ['sometimes', 'array'],
+            'items.*.id' => ['required_with:items', 'integer'],
+            'items.*.accepted_quantity' => ['required_with:items', 'numeric', 'min:0'],
+        ]);
+
+        $accepted = [];
+        foreach ($payload['items'] ?? [] as $line) {
+            $accepted[(int) $line['id']] = $line['accepted_quantity'];
+        }
+
+        DB::transaction(fn () => $inventory->receivePurchase($purchase, $request->user(), $accepted));
+
+        return response()->json(['data' => $purchase->fresh(['items.inventoryItem', 'supplier'])]);
+    }
+
+    public function decidePurchase(Request $request, Purchase $purchase, AuditLogger $audit): JsonResponse
+    {
+        abort_unless($request->user()->hasPermission(Permission::PurchasesApprove), 403);
+        abort_unless($purchase->branch_id === $this->branchId(), 404);
+
+        if ($purchase->received_at !== null) {
+            return response()->json(['message' => 'A received purchase cannot be re-approved.'], 422);
+        }
+
+        $data = $request->validate([
+            'decision' => ['required', Rule::in(['approved', 'rejected'])],
+            'notes' => ['nullable', 'string'],
+        ]);
+
+        $purchase->update([
+            'approval_status' => $data['decision'],
+            'approved_by' => $request->user()->id,
+            'approved_at' => now(),
+            'approval_notes' => $data['notes'] ?? null,
+        ]);
+
+        $audit->record('purchase.'.$data['decision'], $purchase, null, $data, $request->user());
 
         return response()->json(['data' => $purchase->fresh(['items.inventoryItem', 'supplier'])]);
     }

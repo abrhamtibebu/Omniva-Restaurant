@@ -44,4 +44,19 @@ class SequenceService
     {
         return $this->next($branchId, 'purchase', 'PO');
     }
+
+    public function nextBonoNumber(int $branchId): string
+    {
+        return $this->next($branchId, 'bono_handover', 'BON');
+    }
+
+    public function nextStockRequestNumber(int $branchId): string
+    {
+        return $this->next($branchId, 'stock_request', 'STK');
+    }
+
+    public function nextReconciliationNumber(int $branchId): string
+    {
+        return $this->next($branchId, 'reconciliation', 'REC');
+    }
 }

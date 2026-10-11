@@ -23,7 +23,13 @@ class InventoryController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        abort_unless($request->user()->hasPermission(Permission::InventoryView), 403);
+        abort_unless(
+            $request->user()->hasPermission(Permission::InventoryView)
+            || $request->user()->hasPermission(Permission::StockRequest)
+            || $request->user()->hasPermission(Permission::BarRedeem)
+            || $request->user()->hasPermission(Permission::KitchenReconcile),
+            403,
+        );
 
         $items = InventoryItem::query()
             ->where('branch_id', $this->branchId())

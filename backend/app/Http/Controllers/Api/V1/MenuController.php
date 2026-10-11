@@ -81,7 +81,13 @@ class MenuController extends Controller
 
     public function items(Request $request): AnonymousResourceCollection
     {
-        abort_unless($request->user()->hasPermission(Permission::MenuView), 403);
+        abort_unless(
+            $request->user()->hasPermission(Permission::MenuView)
+            || $request->user()->hasPermission(Permission::MenuManage)
+            || $request->user()->hasPermission(Permission::BonosTypesManage)
+            || $request->user()->hasPermission(Permission::KitchenReconcile),
+            403,
+        );
 
         $items = MenuItem::query()
             ->with(['category', 'variants', 'modifiers'])
@@ -154,6 +160,23 @@ class MenuController extends Controller
         }
 
         return new MenuItemResource($item->fresh(['category', 'variants', 'modifiers']));
+    }
+
+    public function itemRecipes(Request $request, MenuItem $item): JsonResponse
+    {
+        abort_unless(
+            $request->user()->hasPermission(Permission::RecipesView)
+            || $request->user()->hasPermission(Permission::MenuManage),
+            403,
+        );
+        abort_unless($item->category->branch_id === $this->branchId(), 404);
+
+        $lines = $item->recipeItems()
+            ->with('inventoryItem:id,name,unit')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json(['data' => $lines]);
     }
 
     public function storeVariant(Request $request, MenuItem $item): MenuItemResource

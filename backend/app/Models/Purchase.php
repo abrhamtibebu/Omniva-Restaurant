@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\PurchaseApprovalStatus;
 use App\Enums\PurchasePaymentStatus;
 use Database\Factories\PurchaseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,6 +25,10 @@ class Purchase extends Model
         'subtotal',
         'total',
         'payment_status',
+        'approval_status',
+        'approved_by',
+        'approved_at',
+        'approval_notes',
         'notes',
         'received_at',
         'created_by',
@@ -36,6 +41,8 @@ class Purchase extends Model
             'subtotal' => 'decimal:2',
             'total' => 'decimal:2',
             'payment_status' => PurchasePaymentStatus::class,
+            'approval_status' => PurchaseApprovalStatus::class,
+            'approved_at' => 'datetime',
             'received_at' => 'datetime',
         ];
     }

@@ -21,13 +21,11 @@ export default defineNuxtRouteMiddleware((to) => {
     return navigateTo(auth.homeRoute)
   }
 
-  const required = to.meta.permissions ?? []
+  const required = (to.meta.permissions ?? []) as string[]
 
   if (required.length > 0 && !auth.canAny(required)) {
     useToast().error('Access denied', 'You do not have permission to open that page.')
 
-    // Each role's home route is always within its own permissions, so this
-    // cannot bounce forever; the guard is only here for misconfiguration.
     return to.path === auth.homeRoute ? abortNavigation() : navigateTo(auth.homeRoute)
   }
 })

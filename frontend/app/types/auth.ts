@@ -1,4 +1,4 @@
-export type RoleSlug = 'admin' | 'manager' | 'cashier' | 'waiter' | 'kitchen'
+export type RoleSlug = 'admin' | 'manager' | 'cashier' | 'waiter' | 'kitchen' | 'barman' | 'storekeeper'
 
 export interface Role {
   id: number
@@ -55,6 +55,21 @@ export interface AuthenticatedUser extends User {
   permissions: string[]
   available_branches?: BranchSummary[]
   can_switch_branch?: boolean
+  is_platform?: boolean
+  bono_control?: BonoControl | null
+}
+
+export interface BonoControl {
+  status: string
+  entitled: boolean
+  trial_ends_at: string | null
+  current_period_end: string | null
+  plan: {
+    code: string
+    name: string
+    price: string
+    currency: string
+  }
 }
 
 export interface LoginCredentials {

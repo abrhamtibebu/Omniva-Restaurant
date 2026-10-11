@@ -68,6 +68,15 @@ return [
 
         Permission::ReportsView->value,
         Permission::AuditLogsView->value,
+
+        Permission::OperationsView->value,
+        Permission::DiscrepanciesReview->value,
+
+        // Owner-level bono custody: approve cashier requests from central.
+        Permission::BonosIssue->value,
+        Permission::BonosConfirm->value,
+        Permission::BonosTypesManage->value,
+        Permission::PurchasesApprove->value,
     ],
 
     RoleSlug::Cashier->value => [
@@ -80,6 +89,13 @@ return [
         Permission::CustomersView->value,
         Permission::CustomersManage->value,
         Permission::ShiftsClock->value,
+
+        Permission::BonosTypesManage->value,
+        Permission::BonosIssue->value,
+        Permission::BonosRequest->value,
+        Permission::BonosConfirm->value,
+        Permission::BonosReconcile->value,
+        Permission::OperationsView->value,
     ],
 
     RoleSlug::Waiter->value => [
@@ -95,12 +111,44 @@ return [
         Permission::ReservationsView->value,
         Permission::ReservationsManage->value,
         Permission::ShiftsClock->value,
+
+        Permission::BonosRequest->value,
+        Permission::BonosConfirm->value,
+        Permission::BonosSubmit->value,
     ],
 
     RoleSlug::Kitchen->value => [
         Permission::KitchenView->value,
         Permission::KitchenUpdateStatus->value,
         Permission::ShiftsClock->value,
+
+        Permission::StockRequest->value,
+        Permission::StockConfirm->value,
+        Permission::KitchenReconcile->value,
+    ],
+
+    RoleSlug::Barman->value => [
+        Permission::ShiftsClock->value,
+        Permission::StockRequest->value,
+        Permission::StockConfirm->value,
+        Permission::BarRedeem->value,
+        Permission::BarClose->value,
+        Permission::OperationsView->value,
+
+        Permission::BonosRequest->value,
+        Permission::BonosConfirm->value,
+    ],
+
+    RoleSlug::Storekeeper->value => [
+        Permission::ShiftsClock->value,
+        Permission::InventoryView->value,
+        Permission::InventoryManage->value,
+        Permission::InventoryAdjust->value,
+        Permission::PurchasesView->value,
+        Permission::PurchasesManage->value,
+        Permission::SuppliersView->value,
+        Permission::StockIssue->value,
+        Permission::OperationsView->value,
     ],
 
 ];

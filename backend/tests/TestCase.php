@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\Restaurant;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\SubscriptionService;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Laravel\Sanctum\Sanctum;
 
@@ -29,6 +30,8 @@ abstract class TestCase extends BaseTestCase
         $this->branch = Branch::factory()->create([
             'restaurant_id' => $this->restaurant->id,
         ]);
+
+        app(SubscriptionService::class)->grantComplimentary($this->restaurant);
     }
 
     protected function user(RoleSlug $slug, array $overrides = []): User

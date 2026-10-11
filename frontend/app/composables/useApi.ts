@@ -40,6 +40,7 @@ export function useApi() {
   ): Promise<T> {
     const headers: Record<string, string> = {
       Accept: 'application/json',
+      'X-Client': 'pos',
       ...(options.headers as Record<string, string> | undefined),
     }
 

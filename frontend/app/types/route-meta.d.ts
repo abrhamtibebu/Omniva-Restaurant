@@ -1,8 +1,10 @@
+import 'vue-router'
+
 declare module 'vue-router' {
   interface RouteMeta {
-    /** Reachable without a session. Only the login screen sets this. */
+    /** When true, the route is reachable without a session. */
     public?: boolean
-    /** Any one of these permissions grants access. Empty means "signed in". */
+    /** User needs any one of these permissions. */
     permissions?: string[]
   }
 }

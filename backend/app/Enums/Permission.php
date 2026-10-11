@@ -79,6 +79,25 @@ enum Permission: string
 
     case AuditLogsView = 'audit_logs.view';
 
+    case BonosTypesManage = 'bonos.types.manage';
+    case BonosIssue = 'bonos.issue';
+    case BonosRequest = 'bonos.request';
+    case BonosConfirm = 'bonos.confirm';
+    case BonosSubmit = 'bonos.submit';
+    case BonosReconcile = 'bonos.reconcile';
+
+    case StockRequest = 'stock.request';
+    case StockIssue = 'stock.issue';
+    case StockConfirm = 'stock.confirm';
+
+    case BarRedeem = 'bar.redeem';
+    case BarClose = 'bar.close';
+    case KitchenReconcile = 'kitchen.reconcile';
+
+    case DiscrepanciesReview = 'discrepancies.review';
+    case OperationsView = 'operations.view';
+    case PurchasesApprove = 'purchases.approve';
+
     /**
      * @return list<string>
      */

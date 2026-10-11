@@ -5,13 +5,19 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\InventoryTransactionType;
+use App\Enums\PurchaseApprovalStatus;
+use App\Enums\StockLocationType;
 use App\Events\InventoryLow;
 use App\Exceptions\DomainException;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
 use App\Models\Order;
 use App\Models\Purchase;
+use App\Models\StockBalance;
+use App\Models\StockLocation;
+use App\Models\StockMovement;
 use App\Models\User;
+use App\Support\Qty;
 use Illuminate\Database\QueryException;
 
 class InventoryService
@@ -58,6 +64,7 @@ class InventoryService
         ]);
 
         $item->refresh();
+        $this->syncStoreBalance($item);
 
         if ($item->isLowStock()) {
             InventoryLow::dispatch($item);
@@ -102,15 +109,43 @@ class InventoryService
                     continue;
                 }
 
-                $this->move(
-                    item: $inventoryItem,
-                    type: InventoryTransactionType::Usage,
-                    quantity: $quantity,
-                    user: $user,
-                    referenceType: Order::class,
-                    referenceId: $order->id,
-                    notes: "Order {$order->order_number}",
-                );
+                $kitchen = StockLocation::query()
+                    ->where('branch_id', $inventoryItem->branch_id)
+                    ->where('type', StockLocationType::Kitchen->value)
+                    ->first();
+                $kitchenBalance = $kitchen
+                    ? StockBalance::query()
+                        ->where('inventory_item_id', $inventoryItem->id)
+                        ->where('stock_location_id', $kitchen->id)
+                        ->first()
+                    : null;
+
+                if ($kitchen && $kitchenBalance) {
+                    $locked = StockBalance::query()->whereKey($kitchenBalance->id)->lockForUpdate()->firstOrFail();
+                    $locked->quantity = Qty::sub((string) $locked->quantity, $quantity);
+                    $locked->save();
+                    StockMovement::query()->create([
+                        'inventory_item_id' => $inventoryItem->id,
+                        'from_location_id' => $kitchen->id,
+                        'type' => 'usage',
+                        'quantity' => $quantity,
+                        'reference_type' => Order::class,
+                        'reference_id' => $order->id,
+                        'idempotency_key' => 'order:'.$order->id.':item:'.$inventoryItem->id,
+                        'notes' => "Order {$order->order_number}",
+                        'created_by' => $user?->id,
+                    ]);
+                } else {
+                    $this->move(
+                        item: $inventoryItem,
+                        type: InventoryTransactionType::Usage,
+                        quantity: $quantity,
+                        user: $user,
+                        referenceType: Order::class,
+                        referenceId: $order->id,
+                        notes: "Order {$order->order_number}",
+                    );
+                }
             }
         } catch (QueryException $exception) {
             if ($this->isUniqueViolation($exception)) {
@@ -121,19 +156,47 @@ class InventoryService
         }
     }
 
-    public function receivePurchase(Purchase $purchase, User $user): void
+    /**
+     * @param  array<int, string|int|float>  $acceptedByLineId
+     */
+    public function receivePurchase(Purchase $purchase, User $user, array $acceptedByLineId = []): void
     {
         if ($purchase->received_at !== null) {
             throw new DomainException('This purchase has already been received.');
         }
 
+        $approval = $purchase->approval_status instanceof PurchaseApprovalStatus
+            ? $purchase->approval_status
+            : PurchaseApprovalStatus::tryFrom((string) $purchase->approval_status);
+
+        if ($approval !== PurchaseApprovalStatus::Approved) {
+            throw new DomainException('This purchase has not been approved.');
+        }
+
         $purchase->load('items.inventoryItem');
 
         foreach ($purchase->items as $line) {
+            $ordered = Qty::of((string) $line->quantity);
+            $accepted = array_key_exists($line->id, $acceptedByLineId)
+                ? Qty::of($acceptedByLineId[$line->id])
+                : $ordered;
+
+            if (Qty::gt($accepted, $ordered)) {
+                throw new DomainException('Accepted quantity cannot exceed the ordered quantity.');
+            }
+
+            $line->accepted_quantity = $accepted;
+            $line->rejected_quantity = Qty::sub($ordered, $accepted);
+            $line->save();
+
+            if (! Qty::isPositive($accepted)) {
+                continue;
+            }
+
             $this->move(
                 item: $line->inventoryItem,
                 type: InventoryTransactionType::Purchase,
-                quantity: (string) $line->quantity,
+                quantity: $accepted,
                 user: $user,
                 unitCost: (string) $line->unit_cost,
                 referenceType: 'purchase_item',
@@ -148,6 +211,23 @@ class InventoryService
 
         $purchase->received_at = now();
         $purchase->save();
+    }
+
+    private function syncStoreBalance(InventoryItem $item): void
+    {
+        $store = StockLocation::query()
+            ->where('branch_id', $item->branch_id)
+            ->where('type', StockLocationType::Store->value)
+            ->first();
+
+        if (! $store) {
+            return;
+        }
+
+        StockBalance::query()->updateOrCreate(
+            ['inventory_item_id' => $item->id, 'stock_location_id' => $store->id],
+            ['quantity' => $item->quantity_on_hand],
+        );
     }
 
     private function isUniqueViolation(QueryException $exception): bool
