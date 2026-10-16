@@ -7,7 +7,9 @@ namespace App\Http\Requests\Users;
 use App\Enums\RoleSlug;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\Phone;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreUserRequest extends FormRequest
 {
@@ -24,12 +26,19 @@ class StoreUserRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['nullable', 'string', 'max:40'],
+            'phone' => ['required', 'string', 'max:40', Rule::unique('users', 'phone')],
             'password' => ['required', 'string', 'min:8'],
             'role_id' => ['required', 'exists:roles,id'],
             'branch_id' => ['required', 'exists:branches,id'],
             'active' => ['sometimes', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('phone')) {
+            $this->merge(['phone' => Phone::normalize($this->input('phone'))]);
+        }
     }
 
     public function withValidator($validator): void

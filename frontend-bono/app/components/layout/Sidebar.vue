@@ -3,6 +3,7 @@ import { NAV_SECTIONS } from '~/utils/navigation'
 
 const auth = useAuthStore()
 const route = useRoute()
+const { t } = useI18n()
 
 const emit = defineEmits<{ navigate: [] }>()
 
@@ -29,16 +30,16 @@ function isActive(to: string): boolean {
       </div>
       <div class="min-w-0">
         <p class="truncate text-sm font-semibold text-white">
-          {{ auth.branch?.restaurant?.name ?? 'Bono Control' }}
+          {{ auth.branch?.restaurant?.name ?? t('common.appName') }}
         </p>
-        <p class="truncate text-xs text-slate-400">{{ auth.branch?.name ?? 'Operations' }}</p>
+        <p class="truncate text-xs text-slate-400">{{ auth.branch?.name ?? t('nav.operations') }}</p>
       </div>
     </div>
 
     <nav class="flex-1 overflow-y-auto px-3 py-4">
-      <div v-for="section in sections" :key="section.label" class="mb-5 last:mb-0">
+      <div v-for="section in sections" :key="section.labelKey" class="mb-5 last:mb-0">
         <p class="px-2 pb-2 text-xs font-semibold tracking-wider text-slate-500 uppercase">
-          {{ section.label }}
+          {{ t(section.labelKey) }}
         </p>
 
         <ul class="space-y-0.5">
@@ -54,7 +55,7 @@ function isActive(to: string): boolean {
               <svg class="size-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" :d="item.icon" />
               </svg>
-              {{ item.label }}
+              {{ t(item.labelKey) }}
             </NuxtLink>
           </li>
         </ul>

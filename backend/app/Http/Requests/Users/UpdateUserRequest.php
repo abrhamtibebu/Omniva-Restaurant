@@ -7,6 +7,7 @@ namespace App\Http\Requests\Users;
 use App\Enums\RoleSlug;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\Phone;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -31,12 +32,19 @@ class UpdateUserRequest extends FormRequest
         return [
             'name' => ['sometimes', 'string', 'max:120'],
             'email' => ['sometimes', 'email', 'max:255', Rule::unique('users', 'email')->ignore($staff->id)],
-            'phone' => ['nullable', 'string', 'max:40'],
+            'phone' => ['sometimes', 'required', 'string', 'max:40', Rule::unique('users', 'phone')->ignore($staff->id)],
             'password' => ['sometimes', 'string', 'min:8'],
             'role_id' => ['sometimes', 'exists:roles,id'],
             'branch_id' => ['sometimes', 'exists:branches,id'],
             'active' => ['sometimes', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('phone')) {
+            $this->merge(['phone' => Phone::normalize($this->input('phone'))]);
+        }
     }
 
     public function withValidator($validator): void

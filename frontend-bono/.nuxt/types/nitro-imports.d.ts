@@ -26,6 +26,9 @@ declare global {
   const defineCachedEventHandler: typeof import('../../node_modules/nitropack/dist/runtime/internal/cache').defineCachedEventHandler
   const defineCachedFunction: typeof import('../../node_modules/nitropack/dist/runtime/internal/cache').defineCachedFunction
   const defineEventHandler: typeof import('../../node_modules/h3/dist/index').defineEventHandler
+  const defineI18nConfig: typeof import('../../node_modules/@nuxtjs/i18n/dist/runtime/composables/shared').defineI18nConfig
+  const defineI18nLocale: typeof import('../../node_modules/@nuxtjs/i18n/dist/runtime/composables/shared').defineI18nLocale
+  const defineI18nLocaleDetector: typeof import('../../node_modules/@nuxtjs/i18n/dist/runtime/composables/server').defineI18nLocaleDetector
   const defineLazyEventHandler: typeof import('../../node_modules/h3/dist/index').defineLazyEventHandler
   const defineNitroErrorHandler: typeof import('../../node_modules/nitropack/dist/runtime/internal/error/utils').defineNitroErrorHandler
   const defineNitroPlugin: typeof import('../../node_modules/nitropack/dist/runtime/internal/plugin').defineNitroPlugin
@@ -46,11 +49,18 @@ declare global {
   const fromPlainHandler: typeof import('../../node_modules/h3/dist/index').fromPlainHandler
   const fromWebHandler: typeof import('../../node_modules/h3/dist/index').fromWebHandler
   const getCookie: typeof import('../../node_modules/h3/dist/index').getCookie
+  const getCookieLocale: typeof import('../../node_modules/@intlify/utils/dist/h3').getCookieLocale
   const getHeader: typeof import('../../node_modules/h3/dist/index').getHeader
+  const getHeaderLanguage: typeof import('../../node_modules/@intlify/utils/dist/h3').getHeaderLanguage
+  const getHeaderLanguages: typeof import('../../node_modules/@intlify/utils/dist/h3').getHeaderLanguages
+  const getHeaderLocale: typeof import('../../node_modules/@intlify/utils/dist/h3').getHeaderLocale
+  const getHeaderLocales: typeof import('../../node_modules/@intlify/utils/dist/h3').getHeaderLocales
   const getHeaders: typeof import('../../node_modules/h3/dist/index').getHeaders
   const getMethod: typeof import('../../node_modules/h3/dist/index').getMethod
+  const getPathLocale: typeof import('../../node_modules/@intlify/utils/dist/h3').getPathLocale
   const getProxyRequestHeaders: typeof import('../../node_modules/h3/dist/index').getProxyRequestHeaders
   const getQuery: typeof import('../../node_modules/h3/dist/index').getQuery
+  const getQueryLocale: typeof import('../../node_modules/@intlify/utils/dist/h3').getQueryLocale
   const getRequestFingerprint: typeof import('../../node_modules/h3/dist/index').getRequestFingerprint
   const getRequestHeader: typeof import('../../node_modules/h3/dist/index').getRequestHeader
   const getRequestHeaders: typeof import('../../node_modules/h3/dist/index').getRequestHeaders
@@ -105,6 +115,7 @@ declare global {
   const sendWebResponse: typeof import('../../node_modules/h3/dist/index').sendWebResponse
   const serveStatic: typeof import('../../node_modules/h3/dist/index').serveStatic
   const setCookie: typeof import('../../node_modules/h3/dist/index').setCookie
+  const setCookieLocale: typeof import('../../node_modules/@intlify/utils/dist/h3').setCookieLocale
   const setHeader: typeof import('../../node_modules/h3/dist/index').setHeader
   const setHeaders: typeof import('../../node_modules/h3/dist/index').setHeaders
   const setResponseHeader: typeof import('../../node_modules/h3/dist/index').setResponseHeader
@@ -116,6 +127,11 @@ declare global {
   const toPlainHandler: typeof import('../../node_modules/h3/dist/index').toPlainHandler
   const toWebHandler: typeof import('../../node_modules/h3/dist/index').toWebHandler
   const toWebRequest: typeof import('../../node_modules/h3/dist/index').toWebRequest
+  const tryCookieLocale: typeof import('../../node_modules/@intlify/utils/dist/h3').tryCookieLocale
+  const tryHeaderLocale: typeof import('../../node_modules/@intlify/utils/dist/h3').tryHeaderLocale
+  const tryHeaderLocales: typeof import('../../node_modules/@intlify/utils/dist/h3').tryHeaderLocales
+  const tryPathLocale: typeof import('../../node_modules/@intlify/utils/dist/h3').tryPathLocale
+  const tryQueryLocale: typeof import('../../node_modules/@intlify/utils/dist/h3').tryQueryLocale
   const unsealSession: typeof import('../../node_modules/h3/dist/index').unsealSession
   const updateSession: typeof import('../../node_modules/h3/dist/index').updateSession
   const useAppConfig: typeof import('../../node_modules/@nuxt/nitro-server/dist/runtime/utils/app-config').useAppConfig
@@ -125,6 +141,7 @@ declare global {
   const useRuntimeConfig: typeof import('../../node_modules/nitropack/dist/runtime/internal/config').useRuntimeConfig
   const useSession: typeof import('../../node_modules/h3/dist/index').useSession
   const useStorage: typeof import('../../node_modules/nitropack/dist/runtime/internal/storage').useStorage
+  const useTranslation: typeof import('../../node_modules/@intlify/h3').useTranslation
   const writeEarlyHints: typeof import('../../node_modules/h3/dist/index').writeEarlyHints
 }
 // for type re-export
@@ -148,3 +165,7 @@ export { defineNitroErrorHandler } from 'nitropack/runtime/internal/error/utils'
 export { buildAssetsURL as __buildAssetsURL, publicAssetsURL as __publicAssetsURL } from '/home/abrham/Documents/Projects/Omniva-Restaurant/frontend-bono/node_modules/@nuxt/nitro-server/dist/runtime/utils/paths';
 export { defineAppConfig } from '/home/abrham/Documents/Projects/Omniva-Restaurant/frontend-bono/node_modules/@nuxt/nitro-server/dist/runtime/utils/config';
 export { useAppConfig } from '/home/abrham/Documents/Projects/Omniva-Restaurant/frontend-bono/node_modules/@nuxt/nitro-server/dist/runtime/utils/app-config';
+export { defineI18nLocale, defineI18nConfig } from '/home/abrham/Documents/Projects/Omniva-Restaurant/frontend-bono/node_modules/@nuxtjs/i18n/dist/runtime/composables/shared';
+export { defineI18nLocaleDetector } from '/home/abrham/Documents/Projects/Omniva-Restaurant/frontend-bono/node_modules/@nuxtjs/i18n/dist/runtime/composables/server';
+export { useTranslation } from '@intlify/h3';
+export { getCookieLocale, getHeaderLanguage, getHeaderLanguages, getHeaderLocale, getHeaderLocales, getPathLocale, getQueryLocale, setCookieLocale, tryCookieLocale, tryHeaderLocale, tryHeaderLocales, tryPathLocale, tryQueryLocale } from '@intlify/utils/h3';

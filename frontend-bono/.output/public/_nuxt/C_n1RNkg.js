@@ -1,0 +1,1 @@
+import{Lt as e,U as t,_t as n,m as r,x as i,z as a}from"./DFvFJYck.js";import{l as o}from"#entry";var s=i({__name:`auth`,setup(i){let{isTelegram:s}=o();return(i,o)=>(a(),r(`div`,{class:e([`flex min-h-screen justify-center p-4`,n(s)?`tg-auth-shell items-start pt-2`:`items-center bg-slate-900`])},[t(i.$slots,`default`)],2))}});export{s as default};

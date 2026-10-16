@@ -21,13 +21,13 @@ class SubmitOrderAction
             $order = Order::query()->with('items')->whereKey($order->id)->lockForUpdate()->firstOrFail();
 
             if ($order->items->isEmpty()) {
-                throw new DomainException('Add at least one item before sending to the kitchen.');
+                throw DomainException::trans('messages.order.add_item_before_kitchen');
             }
 
             if ($order->status === OrderStatus::Draft) {
                 $this->state->transition($order, OrderStatus::Submitted);
             } elseif (! $order->status->isOpen()) {
-                throw new DomainException('This order can no longer be submitted.');
+                throw DomainException::trans('messages.order.cannot_submit');
             }
 
             $order->items()->update(['submitted_to_kitchen' => true]);

@@ -76,6 +76,7 @@ return [
         Permission::BonosIssue->value,
         Permission::BonosConfirm->value,
         Permission::BonosTypesManage->value,
+        Permission::BonosReconcile->value,
         Permission::PurchasesApprove->value,
     ],
 

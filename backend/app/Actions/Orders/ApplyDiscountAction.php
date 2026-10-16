@@ -22,11 +22,11 @@ class ApplyDiscountAction
     public function execute(Order $order, string $amount, User $actor): Order
     {
         if (! $order->status->isOpen()) {
-            throw new DomainException('Discounts cannot be applied to a closed order.');
+            throw DomainException::trans('messages.order.discount_closed');
         }
 
         if (Money::compare($amount, '0') < 0) {
-            throw new DomainException('Discount cannot be negative.');
+            throw DomainException::trans('messages.order.discount_negative');
         }
 
         return DB::transaction(function () use ($order, $amount, $actor) {
@@ -39,7 +39,7 @@ class ApplyDiscountAction
             $this->calculator->recalculate($order);
 
             if (Money::compare($amount, (string) $order->subtotal) > 0) {
-                throw new DomainException('Discount cannot exceed the subtotal.');
+                throw DomainException::trans('messages.order.discount_exceeds_subtotal');
             }
 
             $this->audit->record(

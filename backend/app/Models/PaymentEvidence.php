@@ -20,12 +20,23 @@ class PaymentEvidence extends Model
         'verification_status', 'verified_by', 'verified_at',
     ];
 
+    protected $appends = ['file_url'];
+
     protected function casts(): array
     {
         return [
             'amount' => 'decimal:2',
             'verified_at' => 'datetime',
         ];
+    }
+
+    public function getFileUrlAttribute(): ?string
+    {
+        if (! $this->id || ! $this->file_hash) {
+            return null;
+        }
+
+        return "/bono/transfer-receipts/{$this->id}/file";
     }
 
     public function reconciliation(): BelongsTo

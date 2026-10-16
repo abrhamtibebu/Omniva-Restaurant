@@ -19,7 +19,7 @@ class EnsureBonoEntitlement
         $restaurantId = $request->user()?->restaurantId();
 
         if (! $this->subscriptions->isEntitled($restaurantId)) {
-            throw new HttpException(402, 'Bono control is not active for this restaurant.');
+            throw new HttpException(402, __('messages.bono.entitlement_inactive'));
         }
 
         return $next($request);

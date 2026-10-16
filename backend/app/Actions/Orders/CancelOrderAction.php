@@ -28,7 +28,7 @@ class CancelOrderAction
             $from = $order->status;
 
             if (! $from->canTransitionTo(OrderStatus::Cancelled)) {
-                throw new DomainException('This order can no longer be cancelled.');
+                throw DomainException::trans('messages.order.cannot_cancel');
             }
 
             $this->state->transition($order, OrderStatus::Cancelled);

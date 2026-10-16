@@ -117,7 +117,7 @@ class OrderController extends Controller
         $this->authorize('update', $order);
         $action->execute($order, $item, $request->user());
 
-        return response()->json(['message' => 'Item removed.']);
+        return response()->json(['message' => __('messages.order.item_removed')]);
     }
 
     public function submit(Request $request, Order $order, SubmitOrderAction $action): OrderResource

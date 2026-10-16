@@ -32,11 +32,11 @@ class CompleteOrderAction
         }
 
         if ($order->status === OrderStatus::Cancelled) {
-            throw new DomainException('A cancelled order cannot be completed.');
+            throw DomainException::trans('messages.order.cancelled_cannot_complete');
         }
 
         if (Money::compare($order->balanceDue(), '0') > 0) {
-            throw new DomainException('The order still has an outstanding balance.');
+            throw DomainException::trans('messages.order.outstanding_balance');
         }
 
         if ($order->type === OrderType::Takeaway && $order->status !== OrderStatus::Served) {
@@ -45,7 +45,7 @@ class CompleteOrderAction
         }
 
         if ($order->status !== OrderStatus::Served) {
-            throw new DomainException('Serve the order before completing it.');
+            throw DomainException::trans('messages.order.serve_before_complete');
         }
 
         $this->state->transition($order, OrderStatus::Completed);

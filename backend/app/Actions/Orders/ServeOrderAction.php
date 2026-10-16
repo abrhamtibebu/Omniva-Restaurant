@@ -25,7 +25,7 @@ class ServeOrderAction
             $order = Order::query()->with('payments')->whereKey($order->id)->lockForUpdate()->firstOrFail();
 
             if ($order->status !== OrderStatus::Ready) {
-                throw new DomainException('Only ready orders can be marked served.');
+                throw DomainException::trans('messages.order.only_ready_served');
             }
 
             $this->state->transition($order, OrderStatus::Served);

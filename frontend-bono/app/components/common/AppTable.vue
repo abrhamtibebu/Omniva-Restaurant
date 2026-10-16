@@ -19,11 +19,13 @@ const props = withDefaults(defineProps<{
 }>(), {
   loading: false,
   rowKey: 'id',
-  emptyTitle: 'Nothing here yet',
   clickable: false,
 })
 
 const emit = defineEmits<{ rowClick: [row: T] }>()
+const { t } = useI18n()
+
+const resolvedEmptyTitle = computed(() => props.emptyTitle ?? t('common.nothingHere'))
 
 const HIDE_CLASSES = {
   sm: 'hidden sm:table-cell',
@@ -46,11 +48,48 @@ function cellClasses(column: TableColumn) {
 }
 
 const showEmpty = computed(() => !props.loading && props.rows.length === 0)
+const primaryColumns = computed(() => props.columns.filter((c) => c.key !== 'actions'))
 </script>
 
 <template>
   <div class="overflow-hidden">
-    <div class="overflow-x-auto">
+    <!-- Mobile / Telegram: stacked cards -->
+    <div class="space-y-3 lg:hidden">
+      <template v-if="loading">
+        <div v-for="n in 4" :key="`card-sk-${n}`" class="card animate-pulse space-y-2 p-3">
+          <div class="h-3 w-1/3 rounded bg-slate-200" />
+          <div class="h-3 w-2/3 rounded bg-slate-200" />
+        </div>
+      </template>
+      <template v-else>
+        <article
+          v-for="row in rows"
+          :key="String(row[rowKey])"
+          class="card space-y-2 p-3"
+          :class="clickable ? 'cursor-pointer active:bg-slate-50' : ''"
+          @click="clickable && emit('rowClick', row)"
+        >
+          <div
+            v-for="column in primaryColumns"
+            :key="column.key"
+            class="flex items-start justify-between gap-3 text-sm"
+          >
+            <span class="shrink-0 text-xs font-medium tracking-wide text-slate-500 uppercase">{{ column.label }}</span>
+            <div class="min-w-0 text-right text-slate-800">
+              <slot :name="`cell:${column.key}`" :row="row" :value="row[column.key]">
+                {{ row[column.key] ?? t('common.dash') }}
+              </slot>
+            </div>
+          </div>
+          <div v-if="$slots['cell:actions']" class="border-t border-slate-100 pt-2">
+            <slot name="cell:actions" :row="row" :value="row.actions" />
+          </div>
+        </article>
+      </template>
+    </div>
+
+    <!-- Desktop table -->
+    <div class="hidden overflow-x-auto lg:block">
       <table class="min-w-full divide-y divide-slate-200">
         <thead class="bg-slate-50">
           <tr>
@@ -67,7 +106,6 @@ const showEmpty = computed(() => !props.loading && props.rows.length === 0)
         </thead>
 
         <tbody class="divide-y divide-slate-100 bg-white">
-          <!-- Skeleton rows keep the layout from collapsing while loading. -->
           <template v-if="loading">
             <tr v-for="n in 5" :key="`skeleton-${n}`">
               <td v-for="column in columns" :key="column.key" class="px-4 py-4" :class="cellClasses(column)">
@@ -91,7 +129,7 @@ const showEmpty = computed(() => !props.loading && props.rows.length === 0)
               :class="cellClasses(column)"
             >
               <slot :name="`cell:${column.key}`" :row="row" :value="row[column.key]">
-                {{ row[column.key] ?? '-' }}
+                {{ row[column.key] ?? t('common.dash') }}
               </slot>
             </td>
           </tr>
@@ -99,7 +137,7 @@ const showEmpty = computed(() => !props.loading && props.rows.length === 0)
       </table>
     </div>
 
-    <EmptyState v-if="showEmpty" :title="emptyTitle" :description="emptyDescription">
+    <EmptyState v-if="showEmpty" :title="resolvedEmptyTitle" :description="emptyDescription">
       <template v-if="$slots.emptyAction" #action>
         <slot name="emptyAction" />
       </template>

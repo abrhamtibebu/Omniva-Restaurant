@@ -3,6 +3,7 @@ const emit = defineEmits<{ toggleSidebar: [] }>()
 
 const auth = useAuthStore()
 const toast = useToast()
+const { t } = useI18n()
 
 const menuOpen = ref(false)
 const loggingOut = ref(false)
@@ -26,13 +27,13 @@ async function onSwitchBranch(event: Event) {
   switching.value = true
   try {
     await auth.switchBranch(id)
-    toast.success(`Now operating ${auth.branch?.name ?? 'this branch'}`)
+    toast.success(t('topbar.nowOperating', { name: auth.branch?.name ?? t('topbar.thisBranch') }))
     if (import.meta.client) {
       window.location.reload()
     }
   }
   catch (error: any) {
-    toast.error(error?.message ?? 'Could not switch branch')
+    toast.error(error?.message ?? t('topbar.couldNotSwitchBranch'))
   }
   finally {
     switching.value = false
@@ -43,7 +44,7 @@ async function logout() {
   loggingOut.value = true
   try {
     await auth.logout()
-    toast.success('Signed out')
+    toast.success(t('common.signedOut'))
     await navigateTo('/login')
   }
   finally {
@@ -58,7 +59,7 @@ async function logout() {
     <button
       type="button"
       class="btn-ghost -ml-2 px-2 py-2 lg:hidden"
-      aria-label="Open navigation"
+      :aria-label="t('common.openNav')"
       @click="emit('toggleSidebar')"
     >
       <svg class="size-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -70,8 +71,10 @@ async function logout() {
       <slot name="title" />
     </div>
 
+    <LanguageSelector compact />
+
     <label v-if="showBranchSwitcher" class="hidden min-w-0 sm:block">
-      <span class="sr-only">Working branch</span>
+      <span class="sr-only">{{ t('common.workingBranch') }}</span>
       <select
         class="input max-w-52 py-1.5 text-sm"
         :value="auth.branch?.id"
@@ -126,19 +129,18 @@ async function logout() {
             role="menuitem"
             @click="menuOpen = false"
           >
-            My account
+            {{ t('common.myAccount') }}
           </NuxtLink>
 
-          <button
-            type="button"
-            class="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+          <AppButton
+            variant="ghost"
+            class="w-full justify-start gap-2 px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
             role="menuitem"
-            :disabled="loggingOut"
+            :loading="loggingOut"
             @click="logout"
           >
-            <AppSpinner v-if="loggingOut" class="size-4" />
-            Sign out
-          </button>
+            {{ t('common.signOut') }}
+          </AppButton>
         </div>
       </Transition>
     </div>

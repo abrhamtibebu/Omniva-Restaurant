@@ -90,11 +90,11 @@ class TableController extends Controller
         abort_unless($table->branch_id === $this->branchId(), 404);
 
         if ($table->current_order_id) {
-            return response()->json(['message' => 'Cannot delete a table with an open order.'], 422);
+            return response()->json(['message' => __('messages.order.table_open_order_delete')], 422);
         }
 
         $table->delete();
 
-        return response()->json(['message' => 'Table deleted.']);
+        return response()->json(['message' => __('messages.order.table_deleted')]);
     }
 }

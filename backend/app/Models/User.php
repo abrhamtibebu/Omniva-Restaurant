@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\Permission;
 use App\Enums\RoleSlug;
 use App\Support\Permissions;
+use App\Support\Phone;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,6 +26,8 @@ class User extends Authenticatable
         'name',
         'email',
         'phone',
+        'telegram_id',
+        'telegram_username',
         'password',
         'role_id',
         'branch_id',
@@ -45,6 +48,11 @@ class User extends Authenticatable
             'active' => 'boolean',
             'is_platform' => 'boolean',
         ];
+    }
+
+    public function setPhoneAttribute(?string $value): void
+    {
+        $this->attributes['phone'] = Phone::normalize($value);
     }
 
     public function role(): BelongsTo

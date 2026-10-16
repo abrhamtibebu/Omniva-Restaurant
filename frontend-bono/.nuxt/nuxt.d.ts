@@ -1,4 +1,5 @@
 /// <reference types="@pinia/nuxt" />
+/// <reference types="@nuxtjs/i18n" />
 /// <reference types="@nuxt/devtools" />
 /// <reference types="@nuxt/telemetry" />
 /// <reference path="types/nitro-layouts.d.ts" />
@@ -18,6 +19,7 @@
 /// <reference path="imports.d.ts" />
 /// <reference path="types/imports.d.ts" />
 /// <reference path="schema/nuxt.schema.d.ts" />
+/// <reference path="types/i18n-plugin.d.ts" />
 /// <reference path="types/nitro.d.ts" />
 
 export {}

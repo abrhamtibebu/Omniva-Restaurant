@@ -24,13 +24,14 @@ class UpdateKitchenStatusAction
             $order = Order::query()->whereKey($item->order_id)->lockForUpdate()->firstOrFail();
 
             if (! $item->submitted_to_kitchen) {
-                throw new DomainException('This item has not been sent to the kitchen yet.');
+                throw DomainException::trans('messages.kitchen.not_sent');
             }
 
             if (! $item->kitchen_status->canTransitionTo($target)) {
-                throw new DomainException(
-                    "Cannot move kitchen status from {$item->kitchen_status->value} to {$target->value}.",
-                );
+                throw DomainException::trans('messages.kitchen.cannot_transition', [
+                    'from' => $item->kitchen_status->value,
+                    'to' => $target->value,
+                ]);
             }
 
             $item->kitchen_status = $target;

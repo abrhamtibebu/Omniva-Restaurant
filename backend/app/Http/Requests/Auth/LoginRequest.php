@@ -19,9 +19,16 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email'],
+            // Email or phone. `email` kept for older clients.
+            'login' => ['required_without:email', 'string', 'max:255'],
+            'email' => ['required_without:login', 'string', 'max:255'],
             'password' => ['required', 'string'],
             'device_name' => ['nullable', 'string', 'max:80'],
         ];
+    }
+
+    public function identifier(): string
+    {
+        return trim((string) ($this->validated('login') ?? $this->validated('email')));
     }
 }

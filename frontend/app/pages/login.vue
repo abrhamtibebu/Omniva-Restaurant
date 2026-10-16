@@ -10,7 +10,7 @@ const auth = useAuthStore()
 const route = useRoute()
 const toast = useToast()
 
-const form = reactive({ email: '', password: '' })
+const form = reactive({ login: '', password: '' })
 const errors = ref<Record<string, string[]>>({})
 const generalError = ref('')
 const submitting = ref(false)
@@ -21,7 +21,7 @@ async function submit() {
   generalError.value = ''
 
   try {
-    const user = await auth.login({ email: form.email, password: form.password })
+    const user = await auth.login({ login: form.login.trim(), password: form.password })
     toast.success(`Welcome back, ${user.name.split(' ')[0]}`)
 
     const redirect = route.query.redirect
@@ -63,16 +63,16 @@ async function submit() {
           {{ generalError }}
         </div>
 
-        <FormField label="Email" for="email" required :error="errors.email?.[0]">
+        <FormField label="Email or phone" for="login" required :error="errors.login?.[0] || errors.email?.[0]">
           <input
-            id="email"
-            v-model="form.email"
-            type="email"
+            id="login"
+            v-model="form.login"
+            type="text"
             class="input"
-            autocomplete="email"
+            autocomplete="username"
             autofocus
             required
-            placeholder="you@restaurant.com"
+            placeholder="you@restaurant.com or 09…"
           >
         </FormField>
 

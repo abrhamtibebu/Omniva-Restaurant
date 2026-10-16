@@ -2,6 +2,7 @@
 import type { ToastKind } from '~/composables/useToast'
 
 const { toasts, dismiss } = useToast()
+const { t } = useI18n()
 
 const STYLES: Record<ToastKind, { wrapper: string; icon: string; path: string }> = {
   success: {
@@ -31,7 +32,7 @@ const STYLES: Record<ToastKind, { wrapper: string; icon: string; path: string }>
   <div
     class="pointer-events-none fixed inset-x-0 top-0 z-100 flex flex-col items-center gap-2 p-4 sm:items-end"
     role="region"
-    aria-label="Notifications"
+    :aria-label="t('common.notifications')"
   >
     <TransitionGroup
       enter-active-class="transition duration-200 ease-out"
@@ -70,7 +71,7 @@ const STYLES: Record<ToastKind, { wrapper: string; icon: string; path: string }>
         <button
           type="button"
           class="shrink-0 rounded-md p-1 text-slate-400 transition-colors hover:bg-black/5 hover:text-slate-600"
-          aria-label="Dismiss"
+          :aria-label="t('common.dismiss')"
           @click="dismiss(toast.id)"
         >
           <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

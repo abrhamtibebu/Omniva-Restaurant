@@ -1,0 +1,1 @@
+import{Q as e,m as t,x as n,z as r}from"./DFvFJYck.js";import{d as i}from"./B4BiZWn-.js";import{t as a}from"./CNs_Ozdc.js";var o=n({__name:`items`,async setup(n){let o,s;return a({permissions:[`menu.view`]}),[o,s]=e(()=>i(`/menu`)),await o,s(),(e,n)=>(r(),t(`div`))}});export{o as default};

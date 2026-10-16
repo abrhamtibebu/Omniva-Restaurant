@@ -35,14 +35,14 @@ class CreateOrderAction
                     ->firstOrFail();
 
                 if ($table->current_order_id) {
-                    throw new DomainException('This table already has an open order.');
+                    throw DomainException::trans('messages.order.table_has_open');
                 }
             }
 
             $type = OrderType::from($data['type'] ?? OrderType::DineIn->value);
 
             if ($type === OrderType::DineIn && $table === null) {
-                throw new DomainException('A dine-in order needs a table.');
+                throw DomainException::trans('messages.order.dine_in_needs_table');
             }
 
             $order = Order::query()->create([

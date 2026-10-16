@@ -1,15 +1,17 @@
 <script setup lang="ts">
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   title?: string
   message?: string
   retrying?: boolean
 }>(), {
-  title: 'Could not load this',
-  message: 'Something went wrong while fetching data.',
   retrying: false,
 })
 
 const emit = defineEmits<{ retry: [] }>()
+const { t } = useI18n()
+
+const displayTitle = computed(() => props.title ?? t('error.couldNotLoad'))
+const displayMessage = computed(() => props.message ?? t('error.fetchFailed'))
 </script>
 
 <template>
@@ -24,12 +26,11 @@ const emit = defineEmits<{ retry: [] }>()
       </svg>
     </div>
 
-    <h3 class="mt-4 text-sm font-semibold text-slate-900">{{ title }}</h3>
-    <p class="mt-1 max-w-sm text-sm text-slate-500">{{ message }}</p>
+    <h3 class="mt-4 text-sm font-semibold text-slate-900">{{ displayTitle }}</h3>
+    <p class="mt-1 max-w-sm text-sm text-slate-500">{{ displayMessage }}</p>
 
-    <button type="button" class="btn-secondary mt-5" :disabled="retrying" @click="emit('retry')">
-      <AppSpinner v-if="retrying" class="size-4" />
-      Try again
-    </button>
+    <AppButton variant="secondary" class="mt-5" :loading="retrying" @click="emit('retry')">
+      {{ t('error.tryAgain') }}
+    </AppButton>
   </div>
 </template>

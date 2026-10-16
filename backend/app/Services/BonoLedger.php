@@ -77,7 +77,7 @@ class BonoLedger
         $qty = Qty::of($quantity);
 
         if (! Qty::isPositive($qty)) {
-            throw new DomainException('Quantity must be greater than zero.');
+            throw DomainException::trans('messages.bono.quantity_gt_zero');
         }
 
         return DB::transaction(function () use ($direction, $branchId, $bonoTypeId, $holderType, $holderId, $qty, $movementType, $referenceType, $referenceId, $idempotencyKey, $actorId, $notes) {
@@ -109,7 +109,7 @@ class BonoLedger
             }
 
             if ($direction === 'out' && Qty::gt($qty, (string) $balance->quantity)) {
-                throw new DomainException('That bono balance is not high enough for this issue.');
+                throw DomainException::trans('messages.bono.balance_too_low');
             }
 
             $balance->quantity = $direction === 'in'

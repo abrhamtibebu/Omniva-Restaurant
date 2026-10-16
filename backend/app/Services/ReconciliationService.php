@@ -11,6 +11,7 @@ use App\Exceptions\DomainException;
 use App\Models\BonoHandover;
 use App\Models\BonoType;
 use App\Models\DiscrepancyCase;
+use App\Models\PaymentEvidence;
 use App\Models\Reconciliation;
 use App\Models\StockBalance;
 use App\Models\User;
@@ -31,9 +32,18 @@ class ReconciliationService
     /**
      * @param  list<array{bono_type_id?: int, inventory_item_id?: int, sold_quantity?: string|int|float, returned_quantity?: string|int|float, physical_quantity?: string|int|float}>  $lines
      * @param  list<array{method: string, amount: string|int|float, reference?: string|null}>  $transfers
+     * @param  list<int>  $transferReceiptIds
      */
-    public function submit(User $actor, int $branchId, string $department, array $lines, string $cash, array $transfers, ?string $notes): Reconciliation
-    {
+    public function submit(
+        User $actor,
+        int $branchId,
+        string $department,
+        array $lines,
+        string $cash,
+        array $transfers,
+        ?string $notes,
+        array $transferReceiptIds = [],
+    ): Reconciliation {
         $session = $this->handovers->openSession($actor, $branchId, $department);
 
         $blocking = Reconciliation::query()
@@ -42,10 +52,10 @@ class ReconciliationService
             ->exists();
 
         if ($blocking) {
-            throw new DomainException('This shift already has a reconciliation in progress.');
+            throw DomainException::trans('messages.reconciliation.shift_in_progress');
         }
 
-        $reconciliation = DB::transaction(function () use ($actor, $branchId, $department, $lines, $cash, $transfers, $notes, $session) {
+        $reconciliation = DB::transaction(function () use ($actor, $branchId, $department, $lines, $cash, $transfers, $notes, $session, $transferReceiptIds) {
             $expectedValue = '0.00';
             $reconciliation = Reconciliation::query()->create([
                 'branch_id' => $branchId,
@@ -62,9 +72,22 @@ class ReconciliationService
             foreach ($lines as $line) {
                 if (! empty($line['bono_type_id'])) {
                     $type = BonoType::query()->where('branch_id', $branchId)->findOrFail($line['bono_type_id']);
-                    $issued = $this->issuedQuantity($session->id, (int) $actor->id, $type->id);
-                    $sold = Qty::of((string) ($line['sold_quantity'] ?? '0'));
                     $returned = Qty::of((string) ($line['returned_quantity'] ?? '0'));
+
+                    if ($department === 'waiter') {
+                        $issued = $this->ledger->balance($branchId, $type->id, BonoLedger::USER, (int) $actor->id);
+                        if (Qty::gt($returned, $issued)) {
+                            throw DomainException::trans('messages.reconciliation.return_exceeds_on_hand');
+                        }
+                        // End Shift: sold is whatever remains after declared returns.
+                        $sold = array_key_exists('sold_quantity', $line) && $line['sold_quantity'] !== null && $line['sold_quantity'] !== ''
+                            ? Qty::of((string) $line['sold_quantity'])
+                            : Qty::sub($issued, $returned);
+                    } else {
+                        $issued = $this->issuedQuantity($session->id, (int) $actor->id, $type->id);
+                        $sold = Qty::of((string) ($line['sold_quantity'] ?? '0'));
+                    }
+
                     $unaccounted = Qty::sub($issued, Qty::add($sold, $returned));
                     $value = Money::multiply((string) $type->unit_value, $sold);
                     $expectedValue = Money::add($expectedValue, $value);
@@ -100,6 +123,10 @@ class ReconciliationService
                 }
             }
 
+            if ($transferReceiptIds !== []) {
+                $this->attachTransferReceipts($reconciliation, $actor, $branchId, $transferReceiptIds);
+            }
+
             foreach ($transfers as $transfer) {
                 $reconciliation->evidence()->create([
                     'branch_id' => $branchId,
@@ -122,6 +149,37 @@ class ReconciliationService
         $this->audit->record('reconciliation.submitted', $reconciliation, null, ['department' => $department], $actor);
 
         return $reconciliation->load('lines.bonoType', 'lines.item', 'evidence', 'submitter');
+    }
+
+    /**
+     * @param  list<int>  $transferReceiptIds
+     */
+    private function attachTransferReceipts(Reconciliation $reconciliation, User $actor, int $branchId, array $transferReceiptIds): void
+    {
+        $ids = array_values(array_unique(array_map('intval', $transferReceiptIds)));
+        $rows = PaymentEvidence::query()
+            ->whereIn('id', $ids)
+            ->lockForUpdate()
+            ->get();
+
+        if ($rows->count() !== count($ids)) {
+            throw DomainException::trans('messages.reconciliation.receipt_not_found');
+        }
+
+        foreach ($rows as $row) {
+            if ((int) $row->branch_id !== $branchId) {
+                throw DomainException::trans('messages.reconciliation.receipt_wrong_branch');
+            }
+            if ((int) $row->uploaded_by !== (int) $actor->id) {
+                throw DomainException::trans('messages.reconciliation.receipt_not_yours');
+            }
+            if ($row->reconciliation_id !== null) {
+                throw DomainException::trans('messages.reconciliation.receipt_already_linked');
+            }
+
+            $row->reconciliation_id = $reconciliation->id;
+            $row->save();
+        }
     }
 
     /**
@@ -176,7 +234,7 @@ class ReconciliationService
         $reconciliation->load('lines', 'evidence');
 
         if (! $this->isClean($reconciliation)) {
-            throw new DomainException('This close has a variance. Flag it instead of accepting it.');
+            throw DomainException::trans('messages.reconciliation.variance_flag_instead');
         }
 
         return $this->finalize($reconciliation, $cashier, ReconciliationStatus::Closed);
@@ -246,11 +304,11 @@ class ReconciliationService
     public function close(Reconciliation $reconciliation, User $actor): Reconciliation
     {
         if ($reconciliation->status->isClosed()) {
-            throw new DomainException('This reconciliation is already closed.');
+            throw DomainException::trans('messages.reconciliation.already_closed');
         }
 
         if ($reconciliation->status !== ReconciliationStatus::Discrepancy) {
-            throw new DomainException('Only a discrepancy review can be closed this way.');
+            throw DomainException::trans('messages.reconciliation.discrepancy_only_close');
         }
 
         $open = DiscrepancyCase::query()
@@ -260,7 +318,7 @@ class ReconciliationService
             ->exists();
 
         if ($open) {
-            throw new DomainException('Resolve the open discrepancies before closing.');
+            throw DomainException::trans('messages.reconciliation.resolve_discrepancies');
         }
 
         return $this->finalize($reconciliation, $actor, ReconciliationStatus::Closed);
@@ -272,7 +330,7 @@ class ReconciliationService
     public function resolve(DiscrepancyCase $case, User $actor, string $resolution, ?array $adjustment): DiscrepancyCase
     {
         if ($case->status === 'resolved') {
-            throw new DomainException('This discrepancy is already resolved.');
+            throw DomainException::trans('messages.reconciliation.discrepancy_already_resolved');
         }
 
         DB::transaction(function () use ($case, $actor, $resolution, $adjustment) {
@@ -392,7 +450,10 @@ class ReconciliationService
             }
         }
 
-        if ($reconciliation->verified_cash !== null && Money::compare((string) $reconciliation->verified_cash, (string) $reconciliation->submitted_cash) !== 0) {
+        $expected = Money::of((string) ($reconciliation->expected_value ?? '0'));
+        $hasMoneyExpectation = Money::compare($expected, '0') === 1;
+
+        if ($hasMoneyExpectation && $reconciliation->verified_cash === null) {
             return false;
         }
 
@@ -402,8 +463,15 @@ class ReconciliationService
             }
         }
 
-        if (Money::compare((string) $reconciliation->submitted_cash, '0') === 1 && $reconciliation->verified_cash === null) {
-            return false;
+        if ($hasMoneyExpectation) {
+            $transferTotal = '0.00';
+            foreach ($reconciliation->evidence as $evidence) {
+                $transferTotal = Money::add($transferTotal, (string) $evidence->amount);
+            }
+            $collected = Money::add((string) $reconciliation->verified_cash, $transferTotal);
+            if (Money::compare($collected, $expected) !== 0) {
+                return false;
+            }
         }
 
         return true;
@@ -412,7 +480,7 @@ class ReconciliationService
     private function guardMutable(Reconciliation $reconciliation): void
     {
         if ($reconciliation->status->isClosed() || $reconciliation->status === ReconciliationStatus::Returned) {
-            throw new DomainException('This reconciliation can no longer be edited.');
+            throw DomainException::trans('messages.reconciliation.no_longer_editable');
         }
     }
 

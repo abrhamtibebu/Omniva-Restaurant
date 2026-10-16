@@ -1,0 +1,1 @@
+import{U as e,m as t,x as n,z as r}from"./DFvFJYck.js";var i={class:`min-h-screen`},a=n({__name:`fullscreen`,setup(n){return(n,a)=>(r(),t(`div`,i,[e(n.$slots,`default`)]))}});export{a as default};

@@ -22,11 +22,11 @@ class RemoveOrderItemAction
     public function execute(Order $order, OrderItem $item, User $actor): void
     {
         if ($item->order_id !== $order->id) {
-            throw new DomainException('Item does not belong to this order.', 404);
+            throw DomainException::trans('messages.order.item_not_on_order', status: 404);
         }
 
         if (! $order->status->isOpen()) {
-            throw new DomainException('This order can no longer be changed.');
+            throw DomainException::trans('messages.order.cannot_change');
         }
 
         DB::transaction(function () use ($order, $item, $actor) {

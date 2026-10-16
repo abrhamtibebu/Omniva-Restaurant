@@ -8,6 +8,7 @@ use App\Services\ReceiptOcrService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class TransferReceiptTest extends TestCase
@@ -70,6 +71,55 @@ class TransferReceiptTest extends TestCase
         $this->getJson('/api/v1/bono/transfer-receipts')
             ->assertOk()
             ->assertJsonCount(1, 'data');
+    }
+
+    public function test_waiter_can_upload_and_cashier_sees_and_validates(): void
+    {
+        $waiter = $this->user(RoleSlug::Waiter);
+        $cashier = $this->user(RoleSlug::Cashier);
+
+        Sanctum::actingAs($waiter);
+        $created = $this->post('/api/v1/bono/transfer-receipts', [
+            'file' => $this->pngUpload('waiter-slip.png'),
+        ], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonPath('data.verification_status', 'pending')
+            ->assertJsonPath('data.uploaded_by', $waiter->id)
+            ->json('data');
+
+        $this->getJson('/api/v1/bono/transfer-receipts')
+            ->assertOk()
+            ->assertJsonCount(1, 'data');
+
+        $this->get('/api/v1/bono/transfer-receipts/'.$created['id'].'/file')
+            ->assertOk();
+
+        Sanctum::actingAs($cashier);
+        $this->getJson('/api/v1/bono/transfer-receipts')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.uploader.name', $waiter->name);
+
+        $this->postJson('/api/v1/bono/transfer-receipts/'.$created['id'].'/verify', [
+            'verification_status' => 'verified',
+        ])->assertOk()
+            ->assertJsonPath('data.verification_status', 'verified');
+    }
+
+    public function test_waiter_cannot_see_another_waiters_receipt(): void
+    {
+        $waiterA = $this->user(RoleSlug::Waiter, ['email' => 'wa@omniva.test']);
+        $waiterB = $this->user(RoleSlug::Waiter, ['email' => 'wb@omniva.test']);
+
+        Sanctum::actingAs($waiterA);
+        $this->post('/api/v1/bono/transfer-receipts', [
+            'file' => $this->pngUpload('a.png'),
+        ], ['Accept' => 'application/json'])->assertCreated();
+
+        Sanctum::actingAs($waiterB);
+        $this->getJson('/api/v1/bono/transfer-receipts')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
     }
 
     public function test_duplicate_file_hash_is_blocked(): void

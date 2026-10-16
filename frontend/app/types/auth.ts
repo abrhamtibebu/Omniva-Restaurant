@@ -73,7 +73,8 @@ export interface BonoControl {
 }
 
 export interface LoginCredentials {
-  email: string
+  /** Email or phone number */
+  login: string
   password: string
   device_name?: string
 }

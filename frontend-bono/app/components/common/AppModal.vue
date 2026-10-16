@@ -12,6 +12,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{ 'update:modelValue': [boolean] }>()
+const { t } = useI18n()
 
 const SIZES = {
   sm: 'max-w-sm',
@@ -32,7 +33,6 @@ function onKeydown(event: KeyboardEvent) {
 onMounted(() => window.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
-// Keep the page behind the modal from scrolling.
 watch(() => props.modelValue, (open) => {
   document.body.classList.toggle('overflow-hidden', open)
 })
@@ -48,30 +48,30 @@ onBeforeUnmount(() => document.body.classList.remove('overflow-hidden'))
       leave-active-class="transition duration-100 ease-in"
       leave-to-class="opacity-0"
     >
-      <div v-if="modelValue" class="fixed inset-0 z-50 overflow-y-auto">
-        <div class="fixed inset-0 bg-slate-900/50" @click="close" />
+      <div v-if="modelValue" class="app-modal fixed inset-0 z-50 overflow-y-auto">
+        <div class="app-modal-backdrop fixed inset-0" @click="close" />
 
         <div class="flex min-h-full items-end justify-center p-0 sm:items-center sm:p-4">
           <div
-            class="relative w-full rounded-t-2xl bg-white shadow-xl sm:rounded-2xl"
-            :class="SIZES[size]"
+            class="app-modal-panel relative w-full rounded-t-2xl shadow-xl sm:rounded-2xl"
+            :class="[SIZES[size], 'max-h-[90dvh] pb-[env(safe-area-inset-bottom,0px)]']"
             role="dialog"
             aria-modal="true"
           >
-            <div v-if="title || $slots.header" class="border-b border-slate-200 px-5 py-4">
+            <div v-if="title || $slots.header" class="app-modal-header border-b px-5 py-4">
               <slot name="header">
-                <h2 class="text-lg font-semibold text-slate-900">{{ title }}</h2>
-                <p v-if="description" class="mt-1 text-sm text-slate-600">{{ description }}</p>
+                <h2 class="app-modal-title text-lg font-semibold">{{ title }}</h2>
+                <p v-if="description" class="app-modal-desc mt-1 text-sm">{{ description }}</p>
               </slot>
             </div>
 
-            <div class="max-h-[70vh] overflow-y-auto px-5 py-4">
+            <div class="max-h-[65dvh] overflow-y-auto px-5 py-4 sm:max-h-[70vh]">
               <slot />
             </div>
 
             <div
               v-if="$slots.footer"
-              class="flex flex-col-reverse gap-2 border-t border-slate-200 px-5 py-4 sm:flex-row sm:justify-end"
+              class="app-modal-footer flex flex-col-reverse gap-2 border-t px-5 py-4 sm:flex-row sm:justify-end"
             >
               <slot name="footer" />
             </div>
@@ -79,8 +79,8 @@ onBeforeUnmount(() => document.body.classList.remove('overflow-hidden'))
             <button
               v-if="!persistent"
               type="button"
-              class="absolute top-3.5 right-4 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-              aria-label="Close"
+              class="app-modal-close absolute top-3.5 right-4 rounded-md p-1.5 transition-colors"
+              :aria-label="t('common.close')"
               @click="close"
             >
               <svg class="size-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

@@ -57,6 +57,9 @@ export interface AuthenticatedUser extends User {
   can_switch_branch?: boolean
   is_platform?: boolean
   bono_control?: BonoControl | null
+  telegram_id?: number | null
+  telegram_username?: string | null
+  telegram_linked?: boolean
 }
 
 export interface BonoControl {
@@ -73,7 +76,8 @@ export interface BonoControl {
 }
 
 export interface LoginCredentials {
-  email: string
+  /** Email or phone number */
+  login: string
   password: string
   device_name?: string
 }

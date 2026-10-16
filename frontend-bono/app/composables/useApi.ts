@@ -10,10 +10,21 @@ type RequestOptions = Omit<NitroFetchOptions<string>, 'method' | 'baseURL'>
  * error normalization exist in exactly one place. Errors always surface as
  * `ApiError`, and an expired session is handled centrally.
  */
+const PRODUCTION_API = 'https://api.esmusstrading.com/api/v1'
+
+/** Resolve API base; never keep a retired Render host. */
+function resolveApiBase(raw: unknown): string {
+  const value = String(raw || PRODUCTION_API).trim().replace(/\/+$/, '')
+  if (!value || value.includes('onrender.com')) return PRODUCTION_API
+  return value
+}
+
 export function useApi() {
   const config = useRuntimeConfig()
   const token = useAuthToken()
   const workingBranchId = useWorkingBranchId()
+  const { t, locale } = useI18nContext()
+  const apiBase = resolveApiBase(config.public.apiBase)
 
   function normalize(error: unknown): ApiError {
     const candidate = error as { status?: number; statusCode?: number; data?: ApiErrorBody }
@@ -21,14 +32,14 @@ export function useApi() {
     const body = candidate?.data
 
     if (status === 0) {
-      return new ApiError('Cannot reach the server. Check your connection.', 0)
+      return new ApiError(t('api.cannotReach'), 0)
     }
 
     const message = body?.message
-      || (status === 403 ? 'You are not allowed to do that.' : null)
-      || (status === 404 ? 'Not found.' : null)
-      || (status === 429 ? 'Too many attempts. Please wait a moment.' : null)
-      || (status >= 500 ? 'Something went wrong on the server.' : 'Request failed.')
+      || (status === 403 ? t('api.forbidden') : null)
+      || (status === 404 ? t('api.notFound') : null)
+      || (status === 429 ? t('api.tooMany') : null)
+      || (status >= 500 ? t('api.serverError') : t('api.requestFailed'))
 
     return new ApiError(message, status, body?.errors ?? {})
   }
@@ -38,9 +49,13 @@ export function useApi() {
     path: string,
     options: RequestOptions = {},
   ): Promise<T> {
+    const { isTelegram } = useTelegramWebApp()
+    const lang = locale.value === 'am' ? 'am' : 'en'
     const headers: Record<string, string> = {
       Accept: 'application/json',
-      'X-Client': 'bono',
+      'Accept-Language': lang,
+      'X-Locale': lang,
+      'X-Client': isTelegram.value ? 'telegram' : 'bono',
       ...(options.headers as Record<string, string> | undefined),
     }
 
@@ -57,7 +72,7 @@ export function useApi() {
       return await $fetch<T>(path, {
         ...options,
         method,
-        baseURL: config.public.apiBase,
+        baseURL: apiBase,
         headers,
       } as NitroFetchOptions<string>)
     }
@@ -74,7 +89,7 @@ export function useApi() {
         if (import.meta.client) {
           const route = useRoute()
           if (route.path !== '/login') {
-            useToast().warning('Session expired', 'Please sign in again.')
+            useToast().warning(t('api.sessionExpired'), t('api.signInAgain'))
             await navigateTo({ path: '/login', query: { redirect: route.fullPath } })
           }
         }

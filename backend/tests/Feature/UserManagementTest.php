@@ -16,6 +16,11 @@ class UserManagementTest extends TestCase
     {
         $this->actingAsRole(RoleSlug::Admin);
 
+        $phones = [
+            RoleSlug::Barman->value => '0911000001',
+            RoleSlug::Storekeeper->value => '0911000002',
+        ];
+
         foreach ([RoleSlug::Barman, RoleSlug::Storekeeper] as $slug) {
             $role = Role::query()->where('slug', $slug->value)->firstOrFail();
 
@@ -23,7 +28,7 @@ class UserManagementTest extends TestCase
                 'name' => $slug->label(),
                 'email' => $slug->value.'@omniva.test',
                 'password' => 'Password123!',
-                'phone' => '0911000000',
+                'phone' => $phones[$slug->value],
                 'role_id' => $role->id,
                 'branch_id' => $this->branch->id,
             ])->assertCreated()
@@ -40,6 +45,7 @@ class UserManagementTest extends TestCase
             'name' => 'Extra Admin',
             'email' => 'extra-admin@omniva.test',
             'password' => 'Password123!',
+            'phone' => '0911999888',
             'role_id' => $admin->id,
             'branch_id' => $this->branch->id,
         ])->assertUnprocessable()

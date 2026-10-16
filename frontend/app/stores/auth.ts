@@ -62,8 +62,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(credentials: LoginCredentials) {
+    const login = credentials.login.trim()
     const response = await useApi().post<LoginResponse>('/login', {
-      ...credentials,
+      login,
+      // Older API builds require `email`; only send it for email identifiers.
+      ...(login.includes('@') ? { email: login } : {}),
+      password: credentials.password,
       device_name: credentials.device_name ?? 'web',
     })
 

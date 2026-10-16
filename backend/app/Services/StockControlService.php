@@ -114,7 +114,7 @@ class StockControlService
             $approved = Qty::of((string) ($byId[$line->id]['approved_quantity'] ?? $line->requested_quantity));
 
             if (Qty::gt($approved, (string) $line->requested_quantity)) {
-                throw new DomainException('Approved quantity cannot exceed the request.');
+                throw DomainException::trans('messages.stock.approved_exceeds_request');
             }
 
             $line->approved_quantity = $approved;
@@ -161,7 +161,7 @@ class StockControlService
                 $issued = Qty::of((string) ($byId[$line->id]['issued_quantity'] ?? $line->approved_quantity));
 
                 if (Qty::gt($issued, (string) $line->approved_quantity)) {
-                    throw new DomainException('Issued quantity cannot exceed the approved quantity.');
+                    throw DomainException::trans('messages.stock.issued_exceeds_approved');
                 }
 
                 $line->issued_quantity = $issued;
@@ -174,7 +174,7 @@ class StockControlService
                 $item = InventoryItem::query()->whereKey($line->inventory_item_id)->lockForUpdate()->firstOrFail();
 
                 if (Qty::gt($issued, (string) $item->quantity_on_hand)) {
-                    throw new DomainException('Store does not have enough '.$item->name.'.');
+                    throw DomainException::trans('messages.stock.insufficient', ['name' => $item->name]);
                 }
 
                 $this->inventory->move(
@@ -217,7 +217,7 @@ class StockControlService
         $this->assertOpen($request, [TransferStatus::AwaitingConfirmation]);
 
         if ((int) $request->requester_id !== $receiver->id && ! $receiver->isAdmin()) {
-            throw new DomainException('Only the receiving department can confirm this stock.');
+            throw DomainException::trans('messages.stock.receiver_must_confirm');
         }
 
         $byId = collect($receipts)->keyBy('id');
@@ -229,7 +229,7 @@ class StockControlService
                 $received = Qty::of((string) ($byId[$line->id]['received_quantity'] ?? $line->issued_quantity));
 
                 if (Qty::gt($received, (string) $line->issued_quantity)) {
-                    throw new DomainException('Received quantity cannot exceed the issued quantity.');
+                    throw DomainException::trans('messages.stock.received_exceeds_issued');
                 }
 
                 $line->received_quantity = $received;
@@ -299,16 +299,16 @@ class StockControlService
         $item = $this->item($branchId, $inventoryItemId);
 
         if (! $type || ! $type->active) {
-            throw new DomainException('That bono type is not available.');
+            throw DomainException::trans('messages.bono.type_not_available');
         }
 
         $linkedIds = $type->menuItems->pluck('id')->map(fn ($id) => (int) $id)->all();
         if ($linkedIds !== []) {
             if (! $menuItemId) {
-                throw new DomainException('Choose which menu item this bono redeems.');
+                throw DomainException::trans('messages.bono.choose_menu_item');
             }
             if (! in_array($menuItemId, $linkedIds, true)) {
-                throw new DomainException('That menu item is not covered by this bono type.');
+                throw DomainException::trans('messages.bono.menu_item_not_covered');
             }
         }
 
@@ -506,11 +506,11 @@ class StockControlService
     private function assertOpen(StockRequest $request, array $allowed): void
     {
         if ($request->status->isLocked()) {
-            throw new DomainException('This stock request is locked and cannot be changed.');
+            throw DomainException::trans('messages.stock.request_locked');
         }
 
         if (! in_array($request->status, $allowed, true)) {
-            throw new DomainException('This stock request cannot take that step from '.$request->status->value.'.');
+            throw DomainException::trans('messages.stock.request_invalid_step', ['status' => $request->status->value]);
         }
     }
 
@@ -519,7 +519,7 @@ class StockControlService
         $item = InventoryItem::query()->where('branch_id', $branchId)->whereKey($itemId)->first();
 
         if (! $item) {
-            throw new DomainException('That stock item is not at this branch.');
+            throw DomainException::trans('messages.stock.item_not_at_branch');
         }
 
         return $item;

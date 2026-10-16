@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /** Replaces `confirm()` for destructive or irreversible actions. */
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   modelValue: boolean
   title: string
   message: string
@@ -9,8 +9,6 @@ withDefaults(defineProps<{
   tone?: 'danger' | 'primary'
   loading?: boolean
 }>(), {
-  confirmLabel: 'Confirm',
-  cancelLabel: 'Cancel',
   tone: 'danger',
   loading: false,
 })
@@ -19,6 +17,10 @@ const emit = defineEmits<{
   'update:modelValue': [boolean]
   confirm: []
 }>()
+
+const { t } = useI18n()
+const resolvedConfirm = computed(() => props.confirmLabel ?? t('common.confirm'))
+const resolvedCancel = computed(() => props.cancelLabel ?? t('common.cancel'))
 </script>
 
 <template>
@@ -32,24 +34,22 @@ const emit = defineEmits<{
     <p class="text-sm text-slate-600">{{ message }}</p>
 
     <template #footer>
-      <button
-        type="button"
-        class="btn-secondary w-full sm:w-auto"
+      <AppButton
+        variant="secondary"
+        class="w-full sm:w-auto"
         :disabled="loading"
         @click="emit('update:modelValue', false)"
       >
-        {{ cancelLabel }}
-      </button>
-      <button
-        type="button"
+        {{ resolvedCancel }}
+      </AppButton>
+      <AppButton
+        :variant="tone === 'danger' ? 'danger' : 'primary'"
         class="w-full sm:w-auto"
-        :class="tone === 'danger' ? 'btn-danger' : 'btn-primary'"
-        :disabled="loading"
+        :loading="loading"
         @click="emit('confirm')"
       >
-        <AppSpinner v-if="loading" class="size-4" />
-        {{ confirmLabel }}
-      </button>
+        {{ resolvedConfirm }}
+      </AppButton>
     </template>
   </AppModal>
 </template>

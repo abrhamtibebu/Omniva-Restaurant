@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->appendToGroup('api', [
+            \App\Http\Middleware\SetApiLocale::class,
             \App\Http\Middleware\IdentifyClient::class,
         ]);
     })

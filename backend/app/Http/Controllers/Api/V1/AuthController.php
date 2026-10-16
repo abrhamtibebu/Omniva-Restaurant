@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Branch;
 use App\Models\User;
+use App\Support\Phone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -18,20 +19,34 @@ class AuthController extends Controller
 {
     public function login(LoginRequest $request): JsonResponse
     {
+        $identifier = $request->identifier();
+
         $user = User::query()
             ->with(['role', 'branch.restaurant'])
-            ->where('email', $request->validated('email'))
+            ->when(
+                str_contains($identifier, '@'),
+                fn ($q) => $q->whereRaw('LOWER(email) = ?', [mb_strtolower($identifier)]),
+                function ($q) use ($identifier) {
+                    $normalized = Phone::normalize($identifier);
+                    $q->where(function ($inner) use ($identifier, $normalized) {
+                        $inner->where('phone', $identifier);
+                        if ($normalized) {
+                            $inner->orWhere('phone', $normalized);
+                        }
+                    });
+                },
+            )
             ->first();
 
         if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['These credentials do not match our records.'],
+                'login' => [__('messages.auth.credentials')],
             ]);
         }
 
         if (! $user->active) {
             throw ValidationException::withMessages([
-                'email' => ['This account is inactive. Contact a manager.'],
+                'login' => [__('messages.auth.inactive_contact')],
             ]);
         }
 
@@ -47,7 +62,7 @@ class AuthController extends Controller
     {
         $request->user()?->currentAccessToken()?->delete();
 
-        return response()->json(['message' => 'Signed out.']);
+        return response()->json(['message' => __('messages.auth.signed_out')]);
     }
 
     public function me(Request $request): UserResource
@@ -69,7 +84,7 @@ class AuthController extends Controller
         abort_unless($request->user()->canOperateBranch($branchId), 403);
 
         $branch = Branch::query()->findOrFail($branchId);
-        abort_unless($branch->active, 422, 'That branch is inactive.');
+        abort_unless($branch->active, 422, __('messages.auth.branch_inactive'));
 
         $request->user()->update(['branch_id' => $branch->id]);
 
@@ -85,6 +100,6 @@ class AuthController extends Controller
 
         $request->user()->update(['password' => $data['password']]);
 
-        return response()->json(['message' => 'Password updated.']);
+        return response()->json(['message' => __('messages.auth.password_updated')]);
     }
 }

@@ -165,7 +165,7 @@ class StockControlController extends Controller
 
         $this->stock->waste($request->user(), $this->branchId(), StockLocationType::from($data['location']), $data['lines']);
 
-        return response()->json(['message' => 'Waste recorded.']);
+        return response()->json(['message' => __('messages.stock.waste_recorded')]);
     }
 
     public function count(Request $request): JsonResponse
@@ -208,7 +208,7 @@ class StockControlController extends Controller
 
         $this->stock->recordKitchenSales($request->user(), $this->branchId(), $data['lines']);
 
-        return response()->json(['message' => 'Kitchen sales summary recorded. It is not added to POS revenue.'], 201);
+        return response()->json(['message' => __('messages.stock.kitchen_sales_recorded')], 201);
     }
 
     /**

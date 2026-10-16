@@ -18,7 +18,7 @@ class EnsureUserIsActive
             $user->currentAccessToken()?->delete();
 
             return response()->json([
-                'message' => 'This account is inactive.',
+                'message' => __('messages.auth.inactive'),
             ], 403);
         }
 

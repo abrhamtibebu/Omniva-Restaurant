@@ -6,9 +6,10 @@
  * Local:
  *   FRONTEND_URL=http://localhost:3000
  *   FRONTEND_BONO_URL=http://localhost:3001
+ *   FRONTEND_TELEGRAM_URL=http://localhost:3001
  *   CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
  *
- * Production (comma-separated for POS + Bono origins):
+ * Production (comma-separated for POS + Bono / Mini App origins):
  *   CORS_ALLOWED_ORIGINS=https://pos.example.com,https://bono.example.com
  *
  * Use CORS_ALLOWED_ORIGINS=* to allow any origin (fine with Bearer auth).

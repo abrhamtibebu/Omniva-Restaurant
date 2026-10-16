@@ -185,7 +185,7 @@ class ProcurementController extends Controller
         abort_unless($purchase->branch_id === $this->branchId(), 404);
 
         if ($purchase->received_at !== null) {
-            return response()->json(['message' => 'A received purchase cannot be re-approved.'], 422);
+            return response()->json(['message' => __('messages.purchase.cannot_reapprove_received')], 422);
         }
 
         $data = $request->validate([

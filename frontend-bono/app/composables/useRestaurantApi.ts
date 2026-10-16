@@ -53,11 +53,19 @@ export function useRestaurantApi() {
     transferReceipts: () => api.get('/bono/transfer-receipts'),
     uploadTransferReceipt: (body: FormData) => api.post('/bono/transfer-receipts', body),
     updateTransferReceipt: (id: number, body: object) => api.patch(`/bono/transfer-receipts/${id}`, body),
+    verifyTransferReceipt: (id: number, body: { verification_status: 'verified' | 'rejected' }) =>
+      api.post(`/bono/transfer-receipts/${id}/verify`, body),
+    transferReceiptFile: (id: number) =>
+      api.get<Blob>(`/bono/transfer-receipts/${id}/file`, {
+        responseType: 'blob',
+        headers: { Accept: '*/*' },
+      } as any),
     bonoHandovers: () => api.get('/bono/handovers'),
     createBonoHandover: (body: object) => api.post('/bono/handovers', body),
     approveBonoHandover: (id: number, body: object) => api.post(`/bono/handovers/${id}/approve`, body),
     rejectBonoHandover: (id: number, body: object) => api.post(`/bono/handovers/${id}/reject`, body),
     issueBonoHandover: (id: number, body: object) => api.post(`/bono/handovers/${id}/issue`, body),
+    approveAndIssueBonoHandover: (id: number, body: object) => api.post(`/bono/handovers/${id}/approve-and-issue`, body),
     confirmBonoHandover: (id: number, body: object) => api.post(`/bono/handovers/${id}/confirm`, body),
 
     stockRequests: () => api.get('/bono/stock-requests'),

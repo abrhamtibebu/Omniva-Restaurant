@@ -21,7 +21,7 @@ class CancelPaymentAction
             $payment = Payment::query()->whereKey($payment->id)->lockForUpdate()->firstOrFail();
 
             if ($payment->status !== PaymentStatus::Completed) {
-                throw new DomainException('Only a completed payment can be reversed.');
+                throw DomainException::trans('messages.payment.only_completed_reverse');
             }
 
             $target = $action === 'refunded' ? PaymentStatus::Refunded : PaymentStatus::Cancelled;

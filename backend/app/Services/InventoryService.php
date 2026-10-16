@@ -162,7 +162,7 @@ class InventoryService
     public function receivePurchase(Purchase $purchase, User $user, array $acceptedByLineId = []): void
     {
         if ($purchase->received_at !== null) {
-            throw new DomainException('This purchase has already been received.');
+            throw DomainException::trans('messages.purchase.already_received');
         }
 
         $approval = $purchase->approval_status instanceof PurchaseApprovalStatus
@@ -170,7 +170,7 @@ class InventoryService
             : PurchaseApprovalStatus::tryFrom((string) $purchase->approval_status);
 
         if ($approval !== PurchaseApprovalStatus::Approved) {
-            throw new DomainException('This purchase has not been approved.');
+            throw DomainException::trans('messages.purchase.not_approved');
         }
 
         $purchase->load('items.inventoryItem');
@@ -182,7 +182,7 @@ class InventoryService
                 : $ordered;
 
             if (Qty::gt($accepted, $ordered)) {
-                throw new DomainException('Accepted quantity cannot exceed the ordered quantity.');
+                throw DomainException::trans('messages.purchase.accepted_exceeds_ordered');
             }
 
             $line->accepted_quantity = $accepted;

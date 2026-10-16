@@ -13,6 +13,30 @@ const HOME_BY_ROLE: Record<RoleSlug, string> = {
   storekeeper: '/purchases',
 }
 
+const USER_CACHE_KEY = 'omniva_bono_user_cache'
+
+function readCachedUser(): AuthenticatedUser | null {
+  if (!import.meta.client) return null
+  try {
+    const raw = localStorage.getItem(USER_CACHE_KEY)
+    return raw ? JSON.parse(raw) as AuthenticatedUser : null
+  }
+  catch {
+    return null
+  }
+}
+
+function writeCachedUser(next: AuthenticatedUser | null) {
+  if (!import.meta.client) return
+  try {
+    if (next) localStorage.setItem(USER_CACHE_KEY, JSON.stringify(next))
+    else localStorage.removeItem(USER_CACHE_KEY)
+  }
+  catch {
+    // ignore quota / private mode
+  }
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const token = useAuthToken()
   const workingBranchId = useWorkingBranchId()
@@ -52,34 +76,69 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     token.value = null
     workingBranchId.value = null
+    writeCachedUser(null)
+  }
+
+  function setSessionUser(next: AuthenticatedUser) {
+    user.value = next
+    rememberWorkingBranch(next)
+    writeCachedUser(next)
   }
 
   async function fetchUser() {
     const response = await useApi().get<ApiResource<AuthenticatedUser>>('/me')
-    user.value = response.data
-    rememberWorkingBranch(response.data)
+    setSessionUser(response.data)
     return response.data
   }
 
   async function login(credentials: LoginCredentials) {
+    const login = credentials.login.trim()
+    const looksLikeEmail = login.includes('@')
     const response = await useApi().post<LoginResponse>('/login', {
-      ...credentials,
+      login,
+      // Older API builds require `email`; only send it when the identifier is an email
+      // so phone login is not rejected as an invalid email address.
+      ...(looksLikeEmail ? { email: login } : {}),
+      password: credentials.password,
       device_name: credentials.device_name ?? 'bono-web',
     })
 
     token.value = response.token
-    user.value = response.user
-    rememberWorkingBranch(response.user)
+    setSessionUser(response.user)
     ready.value = true
 
+    return response.user
+  }
+
+  async function loginWithTelegram(initData: string) {
+    const response = await useApi().post<LoginResponse>('/telegram/auth', {
+      init_data: initData,
+      device_name: 'telegram-miniapp',
+    })
+    token.value = response.token
+    setSessionUser(response.user)
+    ready.value = true
+    return response.user
+  }
+
+  async function linkTelegram(initData: string) {
+    const response = await useApi().post<{ message: string, user: AuthenticatedUser }>('/telegram/link', {
+      init_data: initData,
+    })
+    setSessionUser(response.user)
+    return response.user
+  }
+
+  async function unlinkTelegram() {
+    const response = await useApi().destroy<{ message: string, user: AuthenticatedUser }>('/telegram/link')
+    setSessionUser(response.user)
     return response.user
   }
 
   async function register(body: { restaurant_name: string, owner_name: string, email: string, password: string, phone?: string }) {
     const response = await useApi().post<LoginResponse>('/register', body)
     token.value = response.token
-    user.value = response.user
-    rememberWorkingBranch(response.user)
+    setSessionUser(response.user)
     ready.value = true
     return response.user
   }
@@ -87,8 +146,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function switchBranch(branchId: number) {
     workingBranchId.value = String(branchId)
     const response = await useRestaurantApi().switchBranch(branchId)
-    user.value = response.data
-    rememberWorkingBranch(response.data)
+    setSessionUser(response.data)
     return response.data
   }
 
@@ -97,10 +155,11 @@ export const useAuthStore = defineStore('auth', () => {
       await useApi().post('/logout')
     }
     catch {
-      // Intentionally ignored.
+      // Local session must end even if the network call fails.
     }
     finally {
       clear()
+      ready.value = true
     }
   }
 
@@ -109,6 +168,16 @@ export const useAuthStore = defineStore('auth', () => {
 
     if (!token.value) {
       ready.value = true
+      return
+    }
+
+    const cached = readCachedUser()
+    if (cached) {
+      user.value = cached
+      rememberWorkingBranch(cached)
+      ready.value = true
+      // Refresh in the background so cold opens feel instant.
+      fetchUser().catch(() => clear())
       return
     }
 
@@ -141,6 +210,9 @@ export const useAuthStore = defineStore('auth', () => {
     clear,
     init,
     login,
+    loginWithTelegram,
+    linkTelegram,
+    unlinkTelegram,
     register,
     logout,
     fetchUser,

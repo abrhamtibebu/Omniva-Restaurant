@@ -18,18 +18,22 @@ use App\Http\Controllers\Api\V1\RegisterController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\StockControlController;
 use App\Http\Controllers\Api\V1\TableController;
+use App\Http\Controllers\Api\V1\TelegramAuthController;
 use App\Http\Controllers\Api\V1\TransferReceiptController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 Route::post('/register', [RegisterController::class, 'store'])->middleware('throttle:login');
+Route::post('/telegram/auth', [TelegramAuthController::class, 'auth'])->middleware('throttle:login');
 
 Route::middleware(['auth:sanctum', 'active', 'throttle:api'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
     Route::patch('/me/password', [AuthController::class, 'updatePassword']);
     Route::post('/me/branch', [AuthController::class, 'switchBranch']);
+    Route::post('/telegram/link', [TelegramAuthController::class, 'link']);
+    Route::delete('/telegram/link', [TelegramAuthController::class, 'unlink']);
 
     Route::get('/roles', [MetaController::class, 'roles']);
     Route::get('/settings', [MetaController::class, 'settings']);
@@ -133,12 +137,15 @@ Route::middleware(['auth:sanctum', 'active', 'throttle:api'])->group(function ()
         Route::get('/people', [BonoController::class, 'people']);
         Route::get('/transfer-receipts', [TransferReceiptController::class, 'index']);
         Route::post('/transfer-receipts', [TransferReceiptController::class, 'store']);
+        Route::get('/transfer-receipts/{paymentEvidence}/file', [TransferReceiptController::class, 'file']);
         Route::patch('/transfer-receipts/{paymentEvidence}', [TransferReceiptController::class, 'update']);
+        Route::post('/transfer-receipts/{paymentEvidence}/verify', [TransferReceiptController::class, 'verify']);
         Route::get('/handovers', [BonoController::class, 'handovers']);
         Route::post('/handovers', [BonoController::class, 'storeHandover']);
         Route::post('/handovers/{bonoHandover}/approve', [BonoController::class, 'approve']);
         Route::post('/handovers/{bonoHandover}/reject', [BonoController::class, 'reject']);
         Route::post('/handovers/{bonoHandover}/issue', [BonoController::class, 'issue']);
+        Route::post('/handovers/{bonoHandover}/approve-and-issue', [BonoController::class, 'approveAndIssue']);
         Route::post('/handovers/{bonoHandover}/confirm', [BonoController::class, 'confirm']);
 
         Route::get('/stock-locations', [StockControlController::class, 'locations']);

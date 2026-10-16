@@ -124,7 +124,7 @@ class SubscriptionService
     public function recordPayment(Invoice $invoice, User $actor): Subscription
     {
         if ($invoice->status !== InvoiceStatus::Open) {
-            throw new DomainException('That invoice is already settled.');
+            throw DomainException::trans('messages.billing.invoice_already_settled');
         }
 
         $invoice->update([

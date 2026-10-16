@@ -8,8 +8,9 @@ The backend (`/backend`) is Laravel 12 + Sanctum. There are **two** Nuxt 4 SPAs 
 | --- | --- | --- | --- |
 | POS | `/frontend` | `3000` | Floor, orders, kitchen, catalogue, inventory |
 | Bono control | `/frontend-bono` | `3001` | Bonos, bar redeem, stock requests, reconciliation, billing, trial signup |
+| Telegram Mini App | same `/frontend-bono` | HTTPS deploy of `:3001` | Staff Bono ops inside Telegram (mobile shell) |
 
-Both call `http://localhost:8000/api/v1` with a bearer token and send `X-Client: pos` or `X-Client: bono`. Entitlement-gated Bono routes live under `/api/v1/bono/*`. Totals, tax, and stock changes are calculated on the server.
+Both call `http://localhost:8000/api/v1` with a bearer token and send `X-Client: pos`, `bono`, or `telegram`. Entitlement-gated Bono routes live under `/api/v1/bono/*`. Totals, tax, and stock changes are calculated on the server.
 
 ## Features
 
@@ -240,8 +241,37 @@ Allow both origins in the API:
 ```env
 FRONTEND_URL=http://localhost:3000
 FRONTEND_BONO_URL=http://localhost:3001
+FRONTEND_TELEGRAM_URL=http://localhost:3001
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
 ```
+
+## Telegram Mini App (staff Bono ops)
+
+The Bono control Nuxt app detects Telegram WebApp and switches to a mobile shell (bottom tabs, safe areas, card lists, theme colors). Same APIs and permissions as the desktop Bono SPA.
+
+### Backend env
+
+```env
+TELEGRAM_BOT_TOKEN=123456:ABC...
+TELEGRAM_BOT_USERNAME=YourBonoBot
+TELEGRAM_AUTH_MAX_AGE=86400
+```
+
+### BotFather checklist
+
+1. Create a bot with BotFather; copy the token into `TELEGRAM_BOT_TOKEN`.
+2. `/newapp` → pick the bot → title/description → upload icon → set Web App URL to your **HTTPS** Bono control URL (same as `FRONTEND_BONO_URL` in production).
+3. Set the chat Menu Button → Open Mini App (same URL).
+4. Deploy `frontend-bono` on HTTPS (Telegram requires TLS for Mini Apps). Local `http://localhost:3001` only works with Telegram Desktop test tricks; use a tunnel (e.g. Cloudflare/ngrok) for real device testing.
+
+### Staff linking
+
+1. Open the Mini App from the bot menu.
+2. First time: **Link Telegram** — sign in with staff email/password once (`POST /api/v1/telegram/link`).
+3. Later opens: `initData` → `POST /api/v1/telegram/auth` → Sanctum token (no password).
+4. Unlink anytime from **Account** in the Mini App or desktop Bono app.
+
+Receipt OCR still needs `tesseract-ocr` on the API host; uploads use the device file picker inside Telegram.
 
 ## Tests
 

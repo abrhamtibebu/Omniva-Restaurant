@@ -14,6 +14,14 @@ class DomainException extends Exception
         parent::__construct($message);
     }
 
+    /**
+     * @param  array<string, mixed>  $replace
+     */
+    public static function trans(string $key, array $replace = [], int $status = 422): self
+    {
+        return new self(__($key, $replace), $status);
+    }
+
     public function render(): JsonResponse
     {
         return response()->json([

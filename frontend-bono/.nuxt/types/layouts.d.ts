@@ -6,6 +6,7 @@ declare module 'nuxt/app' {
     auth: ComponentProps<typeof import("/home/abrham/Documents/Projects/Omniva-Restaurant/frontend-bono/app/layouts/auth.vue").default>
     default: ComponentProps<typeof import("/home/abrham/Documents/Projects/Omniva-Restaurant/frontend-bono/app/layouts/default.vue").default>
     fullscreen: ComponentProps<typeof import("/home/abrham/Documents/Projects/Omniva-Restaurant/frontend-bono/app/layouts/fullscreen.vue").default>
+    telegram: ComponentProps<typeof import("/home/abrham/Documents/Projects/Omniva-Restaurant/frontend-bono/app/layouts/telegram.vue").default>
   }
   export type LayoutKey = keyof NuxtLayouts extends never ? string : keyof NuxtLayouts
   interface PageMeta {

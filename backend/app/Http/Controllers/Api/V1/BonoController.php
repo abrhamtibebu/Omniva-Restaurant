@@ -123,7 +123,7 @@ class BonoController extends Controller
 
         if ($count !== count($ids)) {
             throw ValidationException::withMessages([
-                'menu_item_ids' => ['Every menu item must belong to this branch.'],
+                'menu_item_ids' => [__('messages.bono.menu_items_branch')],
             ]);
         }
 
@@ -134,13 +134,21 @@ class BonoController extends Controller
     {
         $this->canAny($request, [Permission::BonosIssue, Permission::BonosRequest, Permission::BonosTypesManage, Permission::OperationsView, Permission::BonosReconcile]);
 
-        $rows = BonoBalance::query()
+        $user = $request->user();
+        $query = BonoBalance::query()
             ->with('bonoType')
             ->where('branch_id', $this->branchId())
-            ->orderBy('bono_type_id')
-            ->get();
+            ->orderBy('bono_type_id');
 
-        return response()->json(['data' => $rows]);
+        // Floor staff only see their own on-hand custody.
+        if ($user->hasPermission(Permission::BonosRequest)
+            && ! $user->hasPermission(Permission::BonosIssue)
+            && ! $user->isAdmin()
+            && ! $user->isManager()) {
+            $query->where('holder_type', 'user')->where('holder_id', $user->id);
+        }
+
+        return response()->json(['data' => $query->get()]);
     }
 
     public function ledger(Request $request): JsonResponse
@@ -170,7 +178,7 @@ class BonoController extends Controller
 
         $this->handovers->openingBalance($request->user(), $this->branchId(), $data['lines']);
 
-        return response()->json(['message' => 'Opening balance recorded.']);
+        return response()->json(['message' => __('messages.bono.opening_balance_recorded')]);
     }
 
     public function people(Request $request): JsonResponse
@@ -313,10 +321,40 @@ class BonoController extends Controller
         return response()->json(['data' => $this->handovers->issueApproved($bonoHandover->load('lines'), $request->user(), $data['lines'] ?? [])]);
     }
 
+    public function approveAndIssue(Request $request, BonoHandover $bonoHandover): JsonResponse
+    {
+        abort_unless(
+            $request->user()->hasPermission(Permission::BonosIssue)
+            || $request->user()->isAdmin()
+            || $request->user()->isManager(),
+            403,
+        );
+        $this->owns($bonoHandover);
+
+        $data = $request->validate([
+            'lines' => ['required', 'array', 'min:1'],
+            'lines.*.id' => ['required', 'integer'],
+            'lines.*.approved_quantity' => ['required', 'numeric', 'min:0'],
+            'lines.*.issued_quantity' => ['sometimes', 'numeric', 'min:0'],
+        ]);
+
+        return response()->json([
+            'data' => $this->handovers->approveAndIssue($bonoHandover->load('lines'), $request->user(), $data['lines']),
+        ]);
+    }
+
     public function confirm(Request $request, BonoHandover $bonoHandover): JsonResponse
     {
-        abort_unless($request->user()->hasPermission(Permission::BonosConfirm), 403);
+        $user = $request->user();
         $this->owns($bonoHandover);
+
+        $isReceiver = (int) $bonoHandover->receiver_id === (int) $user->id;
+        abort_unless(
+            $user->hasPermission(Permission::BonosConfirm)
+            || ($isReceiver && $user->hasPermission(Permission::BonosRequest))
+            || $user->isAdmin(),
+            403,
+        );
 
         $data = $request->validate([
             'lines' => ['required', 'array', 'min:1'],
@@ -324,7 +362,7 @@ class BonoController extends Controller
             'lines.*.received_quantity' => ['required', 'numeric', 'min:0'],
         ]);
 
-        return response()->json(['data' => $this->handovers->confirm($bonoHandover->load('lines'), $request->user(), $data['lines'])]);
+        return response()->json(['data' => $this->handovers->confirm($bonoHandover->load('lines'), $user, $data['lines'])]);
     }
 
     private function owns(BonoHandover $handover): void

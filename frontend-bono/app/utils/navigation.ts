@@ -1,14 +1,14 @@
 import { PERMISSIONS } from '~/utils/permissions'
 
 export interface NavItem {
-  label: string
+  labelKey: string
   to: string
   icon: string
   permissions: string[]
 }
 
 export interface NavSection {
-  label: string
+  labelKey: string
   items: NavItem[]
 }
 
@@ -26,21 +26,21 @@ const ICONS = {
 
 export const NAV_SECTIONS: NavSection[] = [
   {
-    label: 'Bono control',
+    labelKey: 'nav.sectionBonoControl',
     items: [
-      { label: 'Operations', to: '/operations', icon: ICONS.dashboard, permissions: [PERMISSIONS.operationsView] },
-      { label: 'Bono team', to: '/bono-team', icon: ICONS.staff, permissions: [PERMISSIONS.usersView, PERMISSIONS.usersManage] },
-      { label: 'Bonos', to: '/bonos', icon: ICONS.orders, permissions: [PERMISSIONS.bonosIssue, PERMISSIONS.bonosTypesManage] },
-      { label: 'Requests', to: '/requests', icon: ICONS.audit, permissions: [PERMISSIONS.bonosRequest, PERMISSIONS.bonosConfirm, PERMISSIONS.bonosIssue, PERMISSIONS.bonosTypesManage] },
-      { label: 'Menu', to: '/menu', icon: ICONS.menu, permissions: [PERMISSIONS.menuView, PERMISSIONS.menuManage] },
-      { label: 'Reconciliation', to: '/reconciliation', icon: ICONS.reports, permissions: [PERMISSIONS.bonosReconcile, PERMISSIONS.bonosSubmit, PERMISSIONS.barClose, PERMISSIONS.kitchenReconcile] },
-      { label: 'Receipts', to: '/receipts', icon: ICONS.expenses, permissions: [PERMISSIONS.bonosReconcile] },
-      { label: 'Bar', to: '/bar', icon: ICONS.kitchen, permissions: [PERMISSIONS.barRedeem, PERMISSIONS.barClose] },
-      { label: 'Kitchen close', to: '/kitchen-ops', icon: ICONS.kitchen, permissions: [PERMISSIONS.kitchenReconcile] },
-      { label: 'Stock requests', to: '/stock-requests', icon: ICONS.inventory, permissions: [PERMISSIONS.stockRequest, PERMISSIONS.stockIssue, PERMISSIONS.stockConfirm] },
-      { label: 'Purchases', to: '/purchases', icon: ICONS.expenses, permissions: [PERMISSIONS.purchasesView, PERMISSIONS.purchasesManage, PERMISSIONS.purchasesApprove] },
-      { label: 'Discrepancies', to: '/discrepancies', icon: ICONS.audit, permissions: [PERMISSIONS.discrepanciesReview] },
-      { label: 'Billing', to: '/billing', icon: ICONS.expenses, permissions: [PERMISSIONS.settingsManage, PERMISSIONS.usersManage] },
+      { labelKey: 'nav.operations', to: '/operations', icon: ICONS.dashboard, permissions: [PERMISSIONS.operationsView] },
+      { labelKey: 'nav.bonoTeam', to: '/bono-team', icon: ICONS.staff, permissions: [PERMISSIONS.usersView, PERMISSIONS.usersManage] },
+      { labelKey: 'nav.bonos', to: '/bonos', icon: ICONS.orders, permissions: [PERMISSIONS.bonosIssue, PERMISSIONS.bonosTypesManage] },
+      { labelKey: 'nav.requests', to: '/requests', icon: ICONS.audit, permissions: [PERMISSIONS.bonosRequest, PERMISSIONS.bonosConfirm, PERMISSIONS.bonosIssue, PERMISSIONS.bonosTypesManage] },
+      { labelKey: 'nav.menu', to: '/menu', icon: ICONS.menu, permissions: [PERMISSIONS.menuView, PERMISSIONS.menuManage] },
+      { labelKey: 'nav.reconciliation', to: '/reconciliation', icon: ICONS.reports, permissions: [PERMISSIONS.bonosReconcile, PERMISSIONS.bonosSubmit, PERMISSIONS.barClose, PERMISSIONS.kitchenReconcile] },
+      { labelKey: 'nav.receipts', to: '/receipts', icon: ICONS.expenses, permissions: [PERMISSIONS.bonosReconcile, PERMISSIONS.bonosSubmit] },
+      { labelKey: 'nav.bar', to: '/bar', icon: ICONS.kitchen, permissions: [PERMISSIONS.barRedeem, PERMISSIONS.barClose] },
+      { labelKey: 'nav.kitchenClose', to: '/kitchen-ops', icon: ICONS.kitchen, permissions: [PERMISSIONS.kitchenReconcile] },
+      { labelKey: 'nav.stockRequests', to: '/stock-requests', icon: ICONS.inventory, permissions: [PERMISSIONS.stockRequest, PERMISSIONS.stockIssue, PERMISSIONS.stockConfirm] },
+      { labelKey: 'nav.purchases', to: '/purchases', icon: ICONS.expenses, permissions: [PERMISSIONS.purchasesView, PERMISSIONS.purchasesManage, PERMISSIONS.purchasesApprove] },
+      { labelKey: 'nav.discrepancies', to: '/discrepancies', icon: ICONS.audit, permissions: [PERMISSIONS.discrepanciesReview] },
+      { labelKey: 'nav.billing', to: '/billing', icon: ICONS.expenses, permissions: [PERMISSIONS.settingsManage, PERMISSIONS.usersManage] },
     ],
   },
 ]

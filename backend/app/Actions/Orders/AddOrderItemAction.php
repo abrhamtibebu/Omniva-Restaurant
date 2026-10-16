@@ -24,7 +24,7 @@ class AddOrderItemAction
     public function execute(Order $order, array $data): OrderItem
     {
         if (! $order->status->isOpen() || $order->status === OrderStatus::Completed) {
-            throw new DomainException('This order can no longer be changed.');
+            throw DomainException::trans('messages.order.cannot_change');
         }
 
         return DB::transaction(function () use ($order, $data) {
@@ -35,11 +35,11 @@ class AddOrderItemAction
                 ->findOrFail($data['menu_item_id']);
 
             if (! $menuItem->active || ! $menuItem->available) {
-                throw new DomainException('That menu item is not available.');
+                throw DomainException::trans('messages.order.menu_item_unavailable');
             }
 
             if ($menuItem->category->branch_id !== $order->branch_id) {
-                throw new DomainException('That menu item does not belong to this branch.');
+                throw DomainException::trans('messages.order.menu_item_wrong_branch');
             }
 
             $variant = null;
@@ -50,7 +50,7 @@ class AddOrderItemAction
                 $variant = $menuItem->variants->firstWhere('id', (int) $data['menu_item_variant_id']);
 
                 if (! $variant || ! $variant->active) {
-                    throw new DomainException('That variant is not available.');
+                    throw DomainException::trans('messages.order.variant_unavailable');
                 }
 
                 $price = (string) $variant->price;
@@ -80,7 +80,7 @@ class AddOrderItemAction
                     $modifier = $allowed->get($modifierId);
 
                     if (! $modifier || ! $modifier->active) {
-                        throw new DomainException('An add-on is not valid for this item.');
+                        throw DomainException::trans('messages.order.addon_invalid');
                     }
 
                     $item->modifiers()->create([

@@ -47,6 +47,23 @@ class AuthenticationTest extends TestCase
         ])->assertUnprocessable();
     }
 
+    public function test_user_can_login_with_phone(): void
+    {
+        $this->user(RoleSlug::Cashier, [
+            'email' => 'phone.login@omniva.test',
+            'phone' => '0911223344',
+            'password' => 'Password123!',
+        ]);
+
+        $this->postJson('/api/v1/login', [
+            'login' => '911223344',
+            'password' => 'Password123!',
+        ])
+            ->assertOk()
+            ->assertJsonPath('user.email', 'phone.login@omniva.test')
+            ->assertJsonPath('user.phone', '251911223344');
+    }
+
     public function test_user_can_logout(): void
     {
         $this->actingAsRole(RoleSlug::Cashier);

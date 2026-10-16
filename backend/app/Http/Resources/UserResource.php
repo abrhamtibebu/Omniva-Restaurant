@@ -19,6 +19,9 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
+            'telegram_id' => $this->telegram_id,
+            'telegram_username' => $this->telegram_username,
+            'telegram_linked' => $this->telegram_id !== null,
             'active' => $this->active,
             'role' => $this->whenLoaded('role', fn () => [
                 'id' => $this->role->id,

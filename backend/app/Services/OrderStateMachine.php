@@ -15,9 +15,10 @@ class OrderStateMachine
         $current = $order->status;
 
         if (! $current->canTransitionTo($target)) {
-            throw new DomainException(
-                "Cannot move an order from {$current->value} to {$target->value}.",
-            );
+            throw DomainException::trans('messages.order.cannot_transition', [
+                'from' => $current->value,
+                'to' => $target->value,
+            ]);
         }
 
         $order->status = $target;

@@ -1,4 +1,4 @@
-export type LayoutKey = "auth" | "default" | "fullscreen"
+export type LayoutKey = "auth" | "default" | "fullscreen" | "telegram"
 declare module 'nitropack' {
   interface NitroRouteConfig {
     appLayout?: LayoutKey | false

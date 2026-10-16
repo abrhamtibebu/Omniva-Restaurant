@@ -46,7 +46,10 @@ class UserController extends Controller
             ->when($request->filled('active'), fn ($q) => $q->where('active', $request->boolean('active')))
             ->when($request->filled('search'), function ($q) use ($request) {
                 $term = '%'.$request->string('search')->toString().'%';
-                $q->where(fn ($inner) => $inner->where('name', 'like', $term)->orWhere('email', 'like', $term));
+                $q->where(fn ($inner) => $inner
+                    ->where('name', 'like', $term)
+                    ->orWhere('email', 'like', $term)
+                    ->orWhere('phone', 'like', $term));
             })
             ->orderBy('name')
             ->paginate(min($request->integer('per_page', 20), 100));
@@ -89,6 +92,6 @@ class UserController extends Controller
 
         $this->audit->record('user.deactivated', $user, ['active' => true], ['active' => false], $request->user());
 
-        return response()->json(['message' => 'Staff account deactivated.']);
+        return response()->json(['message' => __('messages.auth.staff_deactivated')]);
     }
 }

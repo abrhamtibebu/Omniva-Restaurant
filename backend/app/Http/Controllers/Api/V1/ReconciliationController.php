@@ -67,6 +67,8 @@ class ReconciliationController extends Controller
             'transfers.*.method' => ['required_with:transfers', 'string'],
             'transfers.*.amount' => ['required_with:transfers', 'numeric', 'gt:0'],
             'transfers.*.reference' => ['nullable', 'string'],
+            'transfer_receipt_ids' => ['sometimes', 'array'],
+            'transfer_receipt_ids.*' => ['integer', 'distinct'],
         ]);
 
         $reconciliation = $this->reconciliations->submit(
@@ -77,6 +79,7 @@ class ReconciliationController extends Controller
             (string) ($data['cash_amount'] ?? '0'),
             $data['transfers'] ?? [],
             $data['notes'] ?? null,
+            $data['transfer_receipt_ids'] ?? [],
         );
 
         return response()->json(['data' => $reconciliation], 201);
@@ -223,18 +226,97 @@ class ReconciliationController extends Controller
             ->sum('total');
 
         $summaries = DepartmentSalesSummary::query()->where('branch_id', $branchId)->latest()->limit(100)->get();
+        $bonoBalances = BonoBalance::query()->with('bonoType')->where('branch_id', $branchId)->get();
+        $discrepancies = DiscrepancyCase::query()->where('branch_id', $branchId)->latest()->limit(50)->get();
+        $pendingApprovals = Purchase::query()
+            ->where('branch_id', $branchId)
+            ->where('approval_status', PurchaseApprovalStatus::Pending)
+            ->count();
+
+        $inbox = [
+            'handovers_awaiting_confirmation' => BonoHandover::query()->where('branch_id', $branchId)->where('status', 'awaiting_confirmation')->count(),
+            'bono_requests' => BonoHandover::query()->where('branch_id', $branchId)->where('status', 'submitted')->count(),
+            'stock_requests' => StockRequest::query()->where('branch_id', $branchId)->where('status', 'submitted')->count(),
+            'stock_awaiting_confirmation' => StockRequest::query()->where('branch_id', $branchId)->where('status', 'awaiting_confirmation')->count(),
+            'reconciliations' => Reconciliation::query()->where('branch_id', $branchId)->whereIn('status', ['submitted', 'under_review', 'discrepancy'])->count(),
+            'open_discrepancies' => DiscrepancyCase::query()->where('branch_id', $branchId)->where('status', 'open')->count(),
+        ];
+
+        $custodyByType = $bonoBalances
+            ->groupBy('bono_type_id')
+            ->map(function ($rows) {
+                $qty = $rows->reduce(fn ($sum, $row) => bcadd((string) $sum, (string) $row->quantity, 3), '0');
+
+                return [
+                    'bono_type_id' => $rows->first()->bono_type_id,
+                    'name' => $rows->first()->bonoType?->name ?? 'Bono',
+                    'quantity' => $qty,
+                ];
+            })
+            ->values()
+            ->sortByDesc(fn ($row) => (float) $row['quantity'])
+            ->values()
+            ->take(8);
+
+        $custodyByHolder = $bonoBalances
+            ->groupBy(fn ($row) => $row->holder_type.':'.$row->holder_id)
+            ->map(function ($rows) {
+                $qty = $rows->reduce(fn ($sum, $row) => bcadd((string) $sum, (string) $row->quantity, 3), '0');
+                $first = $rows->first();
+
+                return [
+                    'holder_type' => $first->holder_type,
+                    'holder_id' => $first->holder_id,
+                    'label' => $first->holder_type === 'central' ? 'Central' : 'User #'.$first->holder_id,
+                    'quantity' => $qty,
+                ];
+            })
+            ->values()
+            ->sortByDesc(fn ($row) => (float) $row['quantity'])
+            ->values()
+            ->take(8);
+
+        $reconTrend = Reconciliation::query()
+            ->where('branch_id', $branchId)
+            ->where('created_at', '>=', now()->subDays(6)->startOfDay())
+            ->get(['id', 'status', 'created_at'])
+            ->groupBy(fn ($row) => $row->created_at?->toDateString())
+            ->map(fn ($rows, $date) => [
+                'date' => $date,
+                'count' => $rows->count(),
+            ])
+            ->values();
+
+        // Fill missing days so the sparkline is always 7 points.
+        $trendFilled = collect(range(6, 0))->map(function (int $ago) use ($reconTrend) {
+            $date = now()->subDays($ago)->toDateString();
+            $hit = $reconTrend->firstWhere('date', $date);
+
+            return ['date' => $date, 'count' => (int) ($hit['count'] ?? 0)];
+        });
 
         return response()->json(['data' => [
-            'bono_balances' => BonoBalance::query()->with('bonoType')->where('branch_id', $branchId)->get(),
+            'inbox' => $inbox,
+            'action_items' => array_sum($inbox) + $pendingApprovals,
+            'charts' => [
+                'action_queue' => collect($inbox)->map(fn ($value, $key) => [
+                    'key' => $key,
+                    'value' => (int) $value,
+                ])->values(),
+                'custody_by_type' => $custodyByType,
+                'custody_by_holder' => $custodyByHolder,
+                'reconciliation_trend' => $trendFilled,
+            ],
+            'bono_balances' => $bonoBalances,
             'reconciliations' => Reconciliation::query()->where('branch_id', $branchId)->latest()->limit(50)->get(),
             'stock_balances' => StockBalance::query()->with('item', 'location')->whereHas('location', fn ($q) => $q->where('branch_id', $branchId))->get(),
             'transfers' => StockRequest::query()->with('lines')->where('branch_id', $branchId)->latest()->limit(50)->get(),
-            'discrepancies' => DiscrepancyCase::query()->where('branch_id', $branchId)->latest()->limit(50)->get(),
+            'discrepancies' => $discrepancies,
             'purchases' => Purchase::query()->where('branch_id', $branchId)->latest()->limit(50)->get(['id', 'purchase_number', 'total', 'payment_status', 'approval_status', 'received_at']),
             'pos_sales' => Money::of((string) $posSales),
             'department_summaries' => $summaries,
             'department_summaries_are_revenue' => false,
-            'pending_purchase_approvals' => Purchase::query()->where('branch_id', $branchId)->where('approval_status', PurchaseApprovalStatus::Pending)->count(),
+            'pending_purchase_approvals' => $pendingApprovals,
         ]]);
     }
 

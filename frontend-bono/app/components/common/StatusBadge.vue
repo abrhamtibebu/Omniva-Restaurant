@@ -11,6 +11,8 @@ const props = withDefaults(defineProps<{
   size: 'sm',
 })
 
+const { t, te } = useI18n()
+
 const TONES: Record<string, string> = {
   // Neutral / inactive
   draft: 'bg-slate-100 text-slate-700 ring-slate-200',
@@ -42,10 +44,30 @@ const TONES: Record<string, string> = {
   available: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
   active: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
   refunded: 'bg-orange-50 text-orange-700 ring-orange-200',
+
+  // Bono / ops
+  awaiting_confirmation: 'bg-amber-50 text-amber-700 ring-amber-200',
+  under_review: 'bg-amber-50 text-amber-700 ring-amber-200',
+  discrepancy: 'bg-red-50 text-red-700 ring-red-200',
+  closed: 'bg-slate-100 text-slate-700 ring-slate-200',
+  open: 'bg-sky-50 text-sky-700 ring-sky-200',
+  approved: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  verified: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  rejected: 'bg-red-50 text-red-700 ring-red-200',
+  parsed: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  needs_review: 'bg-amber-50 text-amber-700 ring-amber-200',
+  trialing: 'bg-sky-50 text-sky-700 ring-sky-200',
+  active_paid: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  past_due: 'bg-red-50 text-red-700 ring-red-200',
+  canceled: 'bg-slate-100 text-slate-500 ring-slate-200',
 }
 
 const tone = computed(() => TONES[props.status] ?? 'bg-slate-100 text-slate-700 ring-slate-200')
-const text = computed(() => props.label ?? humanize(props.status))
+const text = computed(() => {
+  if (props.label) return props.label
+  const key = `status.${props.status}`
+  return te(key) ? t(key) : humanize(props.status)
+})
 </script>
 
 <template>

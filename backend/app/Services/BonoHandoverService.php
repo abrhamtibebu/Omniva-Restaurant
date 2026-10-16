@@ -201,16 +201,16 @@ class BonoHandoverService
         }
 
         if ($handover->kind === 'cashier_request') {
-            throw new DomainException('Only an admin or owner can approve cashier bono requests.');
+            throw DomainException::trans('messages.bono.approve_admin_only');
         }
 
         if (! $actor->hasPermission(Permission::BonosIssue)) {
-            throw new DomainException('You cannot approve this bono request.');
+            throw DomainException::trans('messages.bono.cannot_approve');
         }
 
         $actor->loadMissing('role');
         if ($actor->role?->slug !== RoleSlug::Cashier->value) {
-            throw new DomainException('Only a cashier, admin, or owner can approve this request.');
+            throw DomainException::trans('messages.bono.approve_cashier_or_admin');
         }
     }
 
@@ -230,17 +230,17 @@ class BonoHandoverService
         }
 
         if ($issuer->id === $receiverId) {
-            throw new DomainException('You cannot return bonos to yourself.');
+            throw DomainException::trans('messages.bono.cannot_return_to_self');
         }
 
         $receiver = User::query()->with('role')->findOrFail($receiverId);
         $receiverSlug = $receiver->role?->slug;
         if (! in_array($receiverSlug, [RoleSlug::Cashier->value, RoleSlug::Admin->value], true)) {
-            throw new DomainException('Unused bonos must be returned to a cashier.');
+            throw DomainException::trans('messages.bono.return_to_cashier');
         }
 
         if ((int) $receiver->branch_id !== $branchId && ! $issuer->canOperateBranch((int) $receiver->branch_id)) {
-            throw new DomainException('That cashier is not on this branch.');
+            throw DomainException::trans('messages.bono.cashier_not_on_branch');
         }
 
         $issuer->loadMissing('role');
@@ -314,7 +314,7 @@ class BonoHandoverService
             $approved = Qty::of((string) ($byId[$line->id]['approved_quantity'] ?? $line->requested_quantity));
 
             if (Qty::gt($approved, (string) $line->requested_quantity)) {
-                throw new DomainException('Approved quantity cannot exceed the request.');
+                throw DomainException::trans('messages.bono.approved_exceeds_request');
             }
 
             $line->approved_quantity = $approved;
@@ -357,6 +357,30 @@ class BonoHandoverService
     }
 
     /**
+     * Approve and issue in one transaction so floor staff land on
+     * awaiting_confirmation (never stuck at approved if issue fails midway).
+     *
+     * @param  list<array{id: int, approved_quantity: string|int|float, issued_quantity?: string|int|float}>  $decisions
+     */
+    public function approveAndIssue(BonoHandover $handover, User $actor, array $decisions): BonoHandover
+    {
+        return DB::transaction(function () use ($handover, $actor, $decisions) {
+            $approved = $this->approve($handover->load('lines'), $actor, $decisions);
+
+            if (in_array($approved->status, [TransferStatus::Rejected], true)) {
+                return $approved->load('lines.bonoType', 'issuer', 'receiver');
+            }
+
+            $issues = collect($decisions)->map(fn (array $row) => [
+                'id' => $row['id'],
+                'issued_quantity' => $row['issued_quantity'] ?? $row['approved_quantity'],
+            ])->all();
+
+            return $this->issueApproved($approved->load('lines'), $actor, $issues);
+        });
+    }
+
+    /**
      * @param  list<array{id: int, issued_quantity: string|int|float}>  $issues
      */
     public function issueApproved(BonoHandover $handover, User $actor, array $issues): BonoHandover
@@ -365,20 +389,22 @@ class BonoHandoverService
         $this->assertCanApprove($handover, $actor);
 
         $byId = collect($issues)->keyBy('id');
-        // Cashier requests always leave central. Floor requests leave the cashier's
-        // hand; owner override (admin/manager) draws from central.
-        $fromCentral = $handover->kind === 'cashier_request'
+        // Cashier requests + owner override always leave central.
+        // Floor requests prefer the cashier's on-hand custody, then fall back to central
+        // so issue is not blocked when the cashier float was never topped up.
+        $forceCentral = $handover->kind === 'cashier_request'
             || $actor->isAdmin()
             || $actor->isManager();
 
-        DB::transaction(function () use ($handover, $actor, $byId, $fromCentral) {
+        DB::transaction(function () use ($handover, $actor, $byId, $forceCentral) {
+            $handover->loadMissing('lines.bonoType');
             $handover->issuer_id = $actor->id;
 
             foreach ($handover->lines as $line) {
                 $issued = Qty::of((string) ($byId[$line->id]['issued_quantity'] ?? $line->approved_quantity));
 
                 if (Qty::gt($issued, (string) $line->approved_quantity)) {
-                    throw new DomainException('Issued quantity cannot exceed the approved quantity.');
+                    throw DomainException::trans('messages.bono.issued_exceeds_approved');
                 }
 
                 $line->issued_quantity = $issued;
@@ -388,11 +414,20 @@ class BonoHandoverService
                     continue;
                 }
 
+                [$holderType, $holderId] = $this->resolveIssueSource(
+                    $handover->branch_id,
+                    $line->bono_type_id,
+                    (string) $issued,
+                    $actor,
+                    $forceCentral,
+                    $line->bonoType?->name ?? 'bono',
+                );
+
                 $this->ledger->debit(
                     $handover->branch_id,
                     $line->bono_type_id,
-                    $fromCentral ? BonoLedger::CENTRAL : BonoLedger::USER,
-                    $fromCentral ? 0 : $actor->id,
+                    $holderType,
+                    $holderId,
                     $issued,
                     'issue',
                     BonoHandover::class,
@@ -413,6 +448,54 @@ class BonoHandoverService
     }
 
     /**
+     * @return array{0: string, 1: int}
+     */
+    private function resolveIssueSource(
+        int $branchId,
+        int $bonoTypeId,
+        string $needed,
+        User $actor,
+        bool $forceCentral,
+        string $typeName,
+    ): array {
+        if ($forceCentral) {
+            $central = $this->ledger->balance($branchId, $bonoTypeId, BonoLedger::CENTRAL, 0);
+            if (Qty::gt($needed, $central)) {
+                throw DomainException::trans('messages.bono.balance_too_low', [
+                    'name' => $typeName,
+                    'available' => $this->qtyLabel($central),
+                    'needed' => $this->qtyLabel($needed),
+                    'central' => $this->qtyLabel($central),
+                ]);
+            }
+
+            return [BonoLedger::CENTRAL, 0];
+        }
+
+        $onHand = $this->ledger->balance($branchId, $bonoTypeId, BonoLedger::USER, $actor->id);
+        if (! Qty::gt($needed, $onHand)) {
+            return [BonoLedger::USER, $actor->id];
+        }
+
+        $central = $this->ledger->balance($branchId, $bonoTypeId, BonoLedger::CENTRAL, 0);
+        if (! Qty::gt($needed, $central)) {
+            return [BonoLedger::CENTRAL, 0];
+        }
+
+        throw DomainException::trans('messages.bono.balance_too_low', [
+            'name' => $typeName,
+            'available' => $this->qtyLabel($onHand),
+            'needed' => $this->qtyLabel($needed),
+            'central' => $this->qtyLabel($central),
+        ]);
+    }
+
+    private function qtyLabel(string $qty): string
+    {
+        return (string) (int) round((float) $qty);
+    }
+
+    /**
      * @param  list<array{id: int, received_quantity: string|int|float}>  $receipts
      */
     public function confirm(BonoHandover $handover, User $receiver, array $receipts): BonoHandover
@@ -420,7 +503,7 @@ class BonoHandoverService
         $this->assertStatus($handover, [TransferStatus::AwaitingConfirmation]);
 
         if ((int) $handover->receiver_id !== $receiver->id && ! $receiver->isAdmin()) {
-            throw new DomainException('Only the receiving person can confirm this handover.');
+            throw DomainException::trans('messages.bono.receiver_must_confirm');
         }
 
         $byId = collect($receipts)->keyBy('id');
@@ -431,7 +514,7 @@ class BonoHandoverService
                 $received = Qty::of((string) ($byId[$line->id]['received_quantity'] ?? $line->issued_quantity));
 
                 if (Qty::gt($received, (string) $line->issued_quantity)) {
-                    throw new DomainException('Received quantity cannot exceed the issued quantity.');
+                    throw DomainException::trans('messages.bono.received_exceeds_issued');
                 }
 
                 $line->received_quantity = $received;
@@ -485,11 +568,11 @@ class BonoHandoverService
     private function assertStatus(BonoHandover $handover, array $allowed): void
     {
         if ($handover->status->isLocked()) {
-            throw new DomainException('This handover is locked and cannot be changed.');
+            throw DomainException::trans('messages.bono.handover_locked');
         }
 
         if (! in_array($handover->status, $allowed, true)) {
-            throw new DomainException('This handover cannot take that step from '.$handover->status->value.'.');
+            throw DomainException::trans('messages.bono.handover_invalid_step', ['status' => $handover->status->value]);
         }
     }
 
@@ -498,7 +581,7 @@ class BonoHandoverService
         $type = BonoType::query()->where('branch_id', $branchId)->whereKey($typeId)->first();
 
         if (! $type || ! $type->active) {
-            throw new DomainException('That bono type is not available at this branch.');
+            throw DomainException::trans('messages.bono.type_not_at_branch');
         }
 
         return $type;

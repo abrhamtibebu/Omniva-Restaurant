@@ -29,19 +29,19 @@ class RecordPaymentAction
             $order = Order::query()->with('payments')->whereKey($order->id)->lockForUpdate()->firstOrFail();
 
             if (! $order->status->canReceivePayments()) {
-                throw new DomainException('Payments cannot be recorded against this order.');
+                throw DomainException::trans('messages.payment.cannot_record');
             }
 
             $amount = Money::of((string) $data['amount']);
 
             if (! Money::isPositive($amount)) {
-                throw new DomainException('Payment amount must be greater than zero.');
+                throw DomainException::trans('messages.payment.amount_gt_zero');
             }
 
             $balance = $order->balanceDue();
 
             if (Money::compare($amount, $balance) > 0) {
-                throw new DomainException('Payment exceeds the remaining balance of '.$balance.'.');
+                throw DomainException::trans('messages.payment.exceeds_balance', ['balance' => $balance]);
             }
 
             $payment = Payment::query()->create([

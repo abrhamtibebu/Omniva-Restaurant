@@ -4,6 +4,7 @@ import type { PaginationMeta } from '~/types/api'
 const props = defineProps<{ meta: PaginationMeta | null }>()
 
 const emit = defineEmits<{ change: [page: number] }>()
+const { t } = useI18n()
 
 const canPrevious = computed(() => (props.meta?.current_page ?? 1) > 1)
 const canNext = computed(() => {
@@ -47,17 +48,15 @@ function go(page: number) {
     class="flex flex-col items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row"
   >
     <p class="text-sm text-slate-600">
-      Showing <span class="font-medium">{{ meta.from ?? 0 }}</span>
-      to <span class="font-medium">{{ meta.to ?? 0 }}</span>
-      of <span class="font-medium">{{ meta.total }}</span>
+      {{ t('common.showingRange', { from: meta.from ?? 0, to: meta.to ?? 0, total: meta.total }) }}
     </p>
 
-    <nav class="flex items-center gap-1" aria-label="Pagination">
+    <nav class="flex items-center gap-1" :aria-label="t('common.pagination')">
       <button
         type="button"
         class="btn-ghost px-2.5 py-1.5"
         :disabled="!canPrevious"
-        aria-label="Previous page"
+        :aria-label="t('common.previousPage')"
         @click="go(meta.current_page - 1)"
       >
         <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -66,7 +65,7 @@ function go(page: number) {
       </button>
 
       <template v-for="(page, index) in pages" :key="`${page}-${index}`">
-        <span v-if="page === 0" class="px-2 text-sm text-slate-400">...</span>
+        <span v-if="page === 0" class="px-2 text-sm text-slate-400">{{ t('common.ellipsis') }}</span>
         <button
           v-else
           type="button"
@@ -85,7 +84,7 @@ function go(page: number) {
         type="button"
         class="btn-ghost px-2.5 py-1.5"
         :disabled="!canNext"
-        aria-label="Next page"
+        :aria-label="t('common.nextPage')"
         @click="go(meta.current_page + 1)"
       >
         <svg class="size-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">

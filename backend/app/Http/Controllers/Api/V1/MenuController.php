@@ -76,7 +76,7 @@ class MenuController extends Controller
 
         $category->update(['active' => false]);
 
-        return response()->json(['message' => 'Category deactivated.']);
+        return response()->json(['message' => __('messages.order.category_deactivated')]);
     }
 
     public function items(Request $request): AnonymousResourceCollection

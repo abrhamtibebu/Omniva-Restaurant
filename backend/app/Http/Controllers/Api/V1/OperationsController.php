@@ -78,7 +78,7 @@ class OperationsController extends Controller
         abort_unless($expense->branch_id === $this->branchId(), 404);
         $expense->delete();
 
-        return response()->json(['message' => 'Expense deleted.']);
+        return response()->json(['message' => __('messages.operations.expense_deleted')]);
     }
 
     public function customers(Request $request): JsonResponse
@@ -211,7 +211,7 @@ class OperationsController extends Controller
             ->first();
 
         if ($open) {
-            return response()->json(['message' => 'You already have an open shift.', 'data' => $open], 422);
+            return response()->json(['message' => __('messages.operations.shift_already_open'), 'data' => $open], 422);
         }
 
         $shift = Shift::query()->create([
@@ -235,7 +235,7 @@ class OperationsController extends Controller
             ->first();
 
         if (! $shift) {
-            return response()->json(['message' => 'No open shift to clock out.'], 422);
+            return response()->json(['message' => __('messages.operations.no_open_shift')], 422);
         }
 
         $shift->update(['clock_out' => now()]);

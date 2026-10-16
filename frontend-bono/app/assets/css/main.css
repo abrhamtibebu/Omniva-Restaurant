@@ -70,4 +70,670 @@
   .card {
     @apply rounded-xl bg-white shadow-sm ring-1 ring-slate-200;
   }
+
+  /* Telegram Mini App: force single-column interactive stacks */
+  .tg-miniapp .tg-stack,
+  .tg-miniapp form.grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .tg-miniapp .lg\:grid-cols-2 {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .page-title {
+    @apply text-slate-900;
+  }
+
+  .page-desc {
+    @apply text-slate-600;
+  }
+
+  .app-modal-backdrop {
+    @apply bg-slate-900/50;
+  }
+
+  .app-modal-panel {
+    @apply bg-white text-slate-900;
+  }
+
+  .app-modal-header,
+  .app-modal-footer {
+    @apply border-slate-200;
+  }
+
+  .app-modal-title {
+    @apply text-slate-900;
+  }
+
+  .app-modal-desc {
+    @apply text-slate-600;
+  }
+
+  .app-modal-close {
+    @apply text-slate-400 hover:bg-slate-100 hover:text-slate-600;
+  }
+}
+
+/* ========== Telegram Mini App theme ========== */
+html.tg-miniapp,
+html.tg-miniapp body {
+  background: var(--tg-theme-bg-color, #f1f5f9) !important;
+  color: var(--tg-theme-text-color, #0f172a) !important;
+}
+
+html.tg-miniapp .tg-auth-shell {
+  background: var(--tg-theme-bg-color, #0f172a) !important;
+  min-height: 100dvh;
+  width: 100%;
+  padding-top: var(--tg-safe-top, 56px);
+  padding-bottom: var(--tg-safe-bottom, 0px);
+  box-sizing: border-box;
+  align-items: flex-start;
+}
+
+.tg-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-width: 28rem;
+  margin-inline: auto;
+  background: var(--tg-theme-bg-color, #f1f5f9);
+  color: var(--tg-theme-text-color, #0f172a);
+  padding-left: max(env(safe-area-inset-left, 0px), var(--tg-safe-left, 0px));
+  padding-right: max(env(safe-area-inset-right, 0px), var(--tg-safe-right, 0px));
+}
+
+/* Reserves space under Telegram’s Close / ⋮ chrome */
+.tg-safe-spacer {
+  flex-shrink: 0;
+  height: var(--tg-safe-top, 56px);
+  width: 100%;
+  background: var(--tg-theme-header-bg-color, var(--tg-theme-bg-color, transparent));
+}
+
+.tg-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 1rem 0.55rem;
+  background: color-mix(in srgb, var(--tg-theme-header-bg-color, var(--tg-theme-bg-color, #fff)) 92%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.tg-header-title {
+  font-size: 1.05rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--tg-theme-text-color, #0f172a);
+}
+
+.tg-avatar-btn {
+  flex-shrink: 0;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--tg-theme-button-text-color, #fff);
+  background: var(--tg-theme-button-color, #2481cc);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--tg-theme-button-color, #2481cc) 30%, transparent);
+}
+
+.tg-main {
+  flex: 1;
+  padding: 0.65rem 1rem calc(6.75rem + var(--tg-safe-bottom, 0px));
+  width: 100%;
+}
+
+.tg-main-guest {
+  padding-bottom: calc(1.25rem + var(--tg-safe-bottom, 0px));
+}
+
+/* Floating pill tab bar (inset from edges) */
+.tg-float-nav {
+  position: fixed;
+  z-index: 30;
+  left: 50%;
+  bottom: calc(0.85rem + max(env(safe-area-inset-bottom, 0px), var(--tg-safe-bottom, 0px)));
+  transform: translateX(-50%);
+  width: min(26rem, calc(100% - 1.5rem));
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 0.15rem;
+  padding: 0.4rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tg-theme-secondary-bg-color, #fff) 94%, transparent);
+  backdrop-filter: blur(18px);
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.06),
+    0 10px 28px rgb(15 23 42 / 0.12);
+  border: 1px solid var(--tg-border, rgba(148, 163, 184, 0.22));
+}
+
+.tg-tab {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.65rem;
+  border-radius: 999px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.12rem;
+  padding: 0.25rem 0.2rem;
+  color: var(--tg-muted, #64748b);
+  background: transparent;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.tg-tab-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.75;
+}
+
+.tg-tab-label {
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-tab-active {
+  color: var(--tg-theme-button-color, #2481cc);
+  background: color-mix(in srgb, var(--tg-theme-button-color, #2481cc) 12%, transparent);
+}
+
+.tg-more-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(0 0 0 / 0.45);
+}
+
+.tg-more-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(28rem, 100%);
+  max-height: 78dvh;
+  overflow-y: auto;
+  z-index: 50;
+  border-radius: 1.5rem 1.5rem 0 0;
+  padding: 0.65rem 1rem calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  background: var(--tg-surface, var(--tg-theme-bg-color, #ffffff));
+  color: var(--tg-theme-text-color, #0f172a);
+  border: 1px solid var(--tg-border, transparent);
+  border-bottom: 0;
+  box-shadow: 0 -12px 40px rgb(15 23 42 / 0.18);
+}
+
+.tg-more-handle {
+  width: 2.5rem;
+  height: 0.28rem;
+  border-radius: 999px;
+  margin: 0.15rem auto 0.85rem;
+  background: var(--tg-border, rgba(148, 163, 184, 0.45));
+}
+
+.tg-more-section {
+  margin-bottom: 1rem;
+}
+
+.tg-more-section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tg-muted, #64748b);
+  padding: 0 0.35rem 0.4rem;
+}
+
+.tg-more-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  text-align: left;
+  min-height: 2.85rem;
+  padding: 0.65rem 0.5rem;
+  border-radius: 0.85rem;
+  font-weight: 550;
+  color: var(--tg-theme-text-color, #0f172a);
+  background: transparent;
+}
+
+.tg-more-link:active {
+  background: var(--tg-field-bg, rgba(148, 163, 184, 0.12));
+}
+
+.tg-more-link-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.75;
+  color: var(--tg-theme-button-color, #2481cc);
+}
+
+.tg-more-danger {
+  color: var(--tg-theme-destructive-text-color, #ef4444);
+  margin-top: 0.35rem;
+}
+
+.tg-more-danger .tg-more-link-icon {
+  color: inherit;
+}
+
+/* Soft task-app primitives */
+.tg-segment {
+  display: flex;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: var(--tg-field-bg, rgba(148, 163, 184, 0.14));
+  gap: 0.2rem;
+}
+
+.tg-segment-btn {
+  flex: 1;
+  min-height: 2.15rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--tg-muted, #64748b);
+  background: transparent;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tg-segment-btn-active {
+  color: var(--tg-theme-text-color, #0f172a);
+  background: var(--tg-surface, #fff);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.08);
+}
+
+.tg-pills {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding-bottom: 0.15rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.tg-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.tg-pill {
+  flex-shrink: 0;
+  min-height: 2rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--tg-muted, #64748b);
+  background: var(--tg-field-bg, rgba(148, 163, 184, 0.12));
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.tg-pill-active {
+  color: var(--tg-theme-button-text-color, #fff);
+  background: var(--tg-theme-button-color, #2481cc);
+  border-color: transparent;
+}
+
+.tg-soft-card {
+  border-radius: 1.25rem;
+  padding: 1.05rem 1.1rem;
+  background: var(--tg-surface, var(--tg-theme-secondary-bg-color, #fff));
+  color: var(--tg-theme-text-color, #0f172a);
+  border: 1px solid var(--tg-border, rgba(148, 163, 184, 0.18));
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 22px rgb(15 23 42 / 0.05);
+}
+
+.tg-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tg-muted, #64748b);
+  margin-bottom: 0.55rem;
+}
+
+.tg-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--tg-border, rgba(148, 163, 184, 0.18));
+}
+
+.tg-meta-row:last-child {
+  border-bottom: none;
+}
+
+.tg-meta-avatar {
+  flex-shrink: 0;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--tg-theme-button-color, #2481cc);
+  background: color-mix(in srgb, var(--tg-theme-button-color, #2481cc) 14%, transparent);
+}
+
+.tg-meta-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.tg-meta-title {
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--tg-theme-text-color, #0f172a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-meta-sub {
+  font-size: 0.75rem;
+  color: var(--tg-muted, #64748b);
+  margin-top: 0.1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-meta-trail {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--tg-muted, #64748b);
+  text-align: right;
+}
+
+.tg-shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.tg-shortcut {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  min-height: 4.5rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1.1rem;
+  background: var(--tg-surface, #fff);
+  border: 1px solid var(--tg-border, rgba(148, 163, 184, 0.18));
+  color: var(--tg-theme-text-color, #0f172a);
+  font-weight: 650;
+  font-size: 0.85rem;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.tg-shortcut-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  stroke: var(--tg-theme-button-color, #2481cc);
+  fill: none;
+  stroke-width: 1.75;
+}
+
+html.tg-miniapp .page-header:not(.page-header--has-actions) {
+  display: none;
+}
+
+html.tg-miniapp .page-header .page-title,
+html.tg-miniapp .page-header .page-desc {
+  display: none;
+}
+
+html.tg-miniapp .page-header {
+  margin-bottom: 0.75rem;
+}
+
+/* Override hardcoded light-theme utilities inside Mini App */
+html.tg-miniapp .page-title,
+html.tg-miniapp h1,
+html.tg-miniapp h2,
+html.tg-miniapp .font-semibold,
+html.tg-miniapp .font-bold {
+  color: var(--tg-theme-text-color, #0f172a);
+}
+
+html.tg-miniapp .page-desc,
+html.tg-miniapp .text-slate-500,
+html.tg-miniapp .text-slate-600,
+html.tg-miniapp .text-slate-400,
+html.tg-miniapp .text-slate-700 {
+  color: var(--tg-muted, #94a3b8) !important;
+}
+
+html.tg-miniapp .text-slate-900,
+html.tg-miniapp .text-slate-800 {
+  color: var(--tg-theme-text-color, #f8fafc) !important;
+}
+
+html.tg-miniapp .label {
+  color: var(--tg-muted, #94a3b8) !important;
+  font-weight: 600;
+}
+
+html.tg-miniapp .card {
+  background: var(--tg-surface, var(--tg-theme-secondary-bg-color, #1c2733));
+  color: var(--tg-theme-text-color, #f8fafc);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 22px rgb(15 23 42 / 0.05);
+  border: 1px solid var(--tg-border, rgba(255, 255, 255, 0.08));
+  border-radius: 1.25rem;
+}
+
+
+html.tg-miniapp .btn-primary,
+html.tg-miniapp .btn-danger {
+  min-height: 2.85rem;
+  width: 100%;
+  border-radius: 0.9rem;
+  background: var(--tg-theme-button-color, #2481cc) !important;
+  color: var(--tg-theme-button-text-color, #ffffff) !important;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--tg-theme-button-color, #2481cc) 28%, transparent);
+}
+
+html.tg-miniapp .btn-primary:hover,
+html.tg-miniapp .btn-danger:hover {
+  filter: brightness(1.05);
+}
+
+html.tg-miniapp .btn-secondary,
+html.tg-miniapp .btn-ghost {
+  min-height: 2.85rem;
+  width: 100%;
+  border-radius: 0.9rem;
+  background: var(--tg-field-bg, rgba(255, 255, 255, 0.06)) !important;
+  color: var(--tg-theme-text-color, #f8fafc) !important;
+  box-shadow: inset 0 0 0 1px var(--tg-border, rgba(255, 255, 255, 0.12));
+}
+
+html.tg-miniapp .input,
+html.tg-miniapp select.input,
+html.tg-miniapp textarea.input {
+  min-height: 2.85rem;
+  font-size: 1rem;
+  border-radius: 0.85rem;
+  background: var(--tg-field-bg, rgba(255, 255, 255, 0.06)) !important;
+  color: var(--tg-field-text, #f8fafc) !important;
+  box-shadow: inset 0 0 0 1px var(--tg-border, rgba(255, 255, 255, 0.14));
+  caret-color: var(--tg-theme-button-color, #2481cc);
+}
+
+html.tg-miniapp .input::placeholder {
+  color: var(--tg-placeholder, rgba(255, 255, 255, 0.4)) !important;
+}
+
+html.tg-miniapp .input:focus {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px var(--tg-theme-button-color, #2481cc),
+    0 0 0 3px color-mix(in srgb, var(--tg-theme-button-color, #2481cc) 28%, transparent) !important;
+}
+
+html.tg-miniapp .bg-white,
+html.tg-miniapp .bg-slate-50,
+html.tg-miniapp .bg-slate-100 {
+  background-color: var(--tg-surface, transparent) !important;
+}
+
+html.tg-miniapp .ring-slate-200,
+html.tg-miniapp .ring-slate-300,
+html.tg-miniapp .border-slate-100,
+html.tg-miniapp .border-slate-200 {
+  --tw-ring-color: var(--tg-border, rgba(148, 163, 184, 0.3));
+  border-color: var(--tg-border, rgba(148, 163, 184, 0.3)) !important;
+}
+
+html.tg-miniapp .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+html.tg-miniapp .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--tg-border, rgba(148, 163, 184, 0.25)) !important;
+}
+
+/* Modals / bottom sheets follow Telegram theme (fix white sheet on dark) */
+html.tg-miniapp .app-modal-backdrop {
+  background: rgb(0 0 0 / 0.55) !important;
+}
+
+html.tg-miniapp .app-modal-panel {
+  background: var(--tg-surface, #1c2733) !important;
+  color: var(--tg-theme-text-color, #f8fafc) !important;
+  border: 1px solid var(--tg-border, rgba(255, 255, 255, 0.1));
+}
+
+html.tg-miniapp .app-modal-header,
+html.tg-miniapp .app-modal-footer {
+  border-color: var(--tg-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+html.tg-miniapp .app-modal-title {
+  color: var(--tg-theme-text-color, #f8fafc) !important;
+}
+
+html.tg-miniapp .app-modal-desc {
+  color: var(--tg-muted, #94a3b8) !important;
+}
+
+html.tg-miniapp .app-modal-close {
+  color: var(--tg-muted, #94a3b8) !important;
+}
+
+html.tg-miniapp .app-modal-close:hover {
+  background: var(--tg-field-bg, rgba(255, 255, 255, 0.08)) !important;
+  color: var(--tg-theme-text-color, #fff) !important;
+}
+
+html.tg-miniapp .tg-stat-card {
+  border-radius: 1.05rem;
+  padding: 1rem 1.05rem;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tg-surface, #1c2733) 100%, #fff 4%),
+    var(--tg-surface, #1c2733)
+  );
+  border: 1px solid var(--tg-border, rgba(255, 255, 255, 0.08));
+}
+
+html.tg-miniapp .tg-stat-label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  color: var(--tg-muted, #9aa7b5);
+}
+
+html.tg-miniapp .tg-stat-value {
+  margin-top: 0.35rem;
+  font-size: 1.65rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--tg-theme-text-color, #fff);
+}
+
+/* Light-mode polish inside Telegram */
+html.tg-miniapp.tg-light .card,
+html.tg-miniapp.tg-light .app-modal-panel,
+html.tg-miniapp.tg-light .tg-stat-card,
+html.tg-miniapp.tg-light .tg-soft-card {
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px rgb(15 23 42 / 0.06);
+}
+
+html.tg-miniapp.tg-dark .tg-soft-card,
+html.tg-miniapp.tg-dark .tg-float-nav {
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.35);
+}
+
+html.tg-miniapp.tg-light .input,
+html.tg-miniapp.tg-light select.input {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.12);
+}
+
+html.tg-miniapp .tg-stack,
+html.tg-miniapp form.grid {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+html.tg-miniapp .lg\:grid-cols-2,
+html.tg-miniapp .sm\:grid-cols-2,
+html.tg-miniapp .md\:grid-cols-3,
+html.tg-miniapp .md\:grid-cols-4 {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+html.tg-miniapp .btn-primary,
+html.tg-miniapp .btn-secondary,
+html.tg-miniapp .btn-danger {
+  width: 100%;
+}
+
+/* Status pills readable on dark Telegram backgrounds */
+html.tg-miniapp.tg-dark [class*='bg-sky-50'],
+html.tg-miniapp.tg-dark [class*='bg-amber-50'],
+html.tg-miniapp.tg-dark [class*='bg-emerald-50'],
+html.tg-miniapp.tg-dark [class*='bg-red-50'],
+html.tg-miniapp.tg-dark [class*='bg-violet-50'],
+html.tg-miniapp.tg-dark [class*='bg-teal-50'],
+html.tg-miniapp.tg-dark [class*='bg-orange-50'],
+html.tg-miniapp.tg-dark [class*='bg-slate-100'],
+html.tg-miniapp.tg-dark [class*='bg-slate-200'] {
+  background-color: var(--tg-field-bg, rgba(255, 255, 255, 0.08)) !important;
+  color: var(--tg-theme-text-color, #f8fafc) !important;
+  --tw-ring-color: var(--tg-border, rgba(255, 255, 255, 0.14));
+}
+
+html.tg-miniapp strong {
+  color: var(--tg-theme-text-color, inherit);
 }

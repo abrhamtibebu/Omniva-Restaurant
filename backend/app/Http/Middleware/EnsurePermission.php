@@ -18,7 +18,7 @@ class EnsurePermission
         abort_unless(
             $user?->hasPermission(Permission::from($permission)),
             403,
-            'You are not allowed to do that.',
+            __('messages.auth.not_allowed'),
         );
 
         return $next($request);
